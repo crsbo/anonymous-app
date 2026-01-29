@@ -150,13 +150,12 @@ def utility_processor():
 # التعديل ده هيجبر ريلواي يمسح الجداول القديمة ويبني الجديدة
 with app.app_context():
  # السطر ده بيبني الجداول الجديدة بالخانات الجديدة
-    db.reflect()
-    db.drop_all()
     db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
 
