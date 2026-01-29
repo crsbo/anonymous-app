@@ -159,8 +159,17 @@ def utility_processor():
         return arrow.get(date).humanize()
     return dict(format_date=format_date)
 
+# تشغيل السيرفر وبناء الجداول
 with app.app_context():
-    db.create_all()
+    # بنعمل try عشان لو فيه مشكلة في التحديث يمسح ويبني من جديد
+    try:
+        # السطر ده هو "الزتونة": بيمسح كل الجداول القديمة اللي مفيهاش خانة hint
+        # ملحوظة: ده هيمسح الرسايل اللي كانت موجودة حالياً، بس ده ضروري عشان الخانات الجديدة تشتغل
+        db.drop_all() 
+        db.create_all()
+        print("Database Rebuilt with New Columns: hint, sender_name, reveal_time")
+    except Exception as e:
+        print(f"Error during DB rebuild: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
