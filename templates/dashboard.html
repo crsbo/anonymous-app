@@ -4,11 +4,6 @@
     <div class="col-md-8 text-center">
         <div class="card shadow-sm p-4 mb-4">
             <h3 class="fw-bold text-dark">Welcome, {{ current_user.username }}!</h3>
-            
-            {% if current_user.is_premium %}
-                <span class="badge bg-warning text-dark mb-2">⭐ Premium Member</span>
-            {% endif %}
-
             <p class="text-muted">Copy your link and share it on Instagram/Snapchat</p>
             <div class="input-group mb-3">
                 <input type="text" id="myLink" class="form-control text-center bg-light" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
@@ -17,12 +12,6 @@
             <div class="d-inline-block badge bg-primary p-2 px-4 fs-6 rounded-pill shadow-sm">Inbox: {{ count }} Messages</div>
         </div>
 
-        {% if not current_user.is_premium %}
-        <div class="alert alert-info shadow-sm" role="alert">
-            Want to know who sent these? <strong>Upgrade to Premium</strong> to see sender names!
-        </div>
-        {% endif %}
-
         <h5 class="text-start mb-3 fw-bold">My Messages</h5>
         <div class="row">
             {% for msg in messages %}
@@ -30,19 +19,9 @@
                 <div class="card shadow-sm p-3 text-start position-relative border-0" style="background: #ffffff;">
                     <p class="mb-2 text-dark fs-5">{{ msg.content }}</p>
                     
-                    {% if current_user.is_premium and msg.sender_id %}
-                        <div class="mb-2"><span class="badge bg-success">From: {{ msg.sender_user.username }}</span></div>
-                    {% endif %}
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted" style="font-size: 0.7rem;">
-                            <i class="bi bi-clock"></i> Received on: {{ msg.timestamp.strftime('%b %d, %I:%M %p') }}
-                        </small>
-                        
-                        {% if msg.sender_id %}
-                            <a href="{{ url_for('reply', msg_id=msg.id) }}" class="btn btn-sm btn-outline-primary py-0" style="font-size: 0.7rem;">Reply</a>
-                        {% endif %}
-                    </div>
+                    <small class="text-muted" style="font-size: 0.7rem;">
+                        <i class="bi bi-clock"></i> Received on: {{ msg.timestamp.strftime('%b %d, %I:%M %p') }}
+                    </small>
 
                     <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
                         <button type="submit" class="btn btn-link text-danger p-1" onclick="return confirm('Delete this message?')">
