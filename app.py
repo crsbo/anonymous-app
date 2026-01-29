@@ -101,8 +101,12 @@ def logout():
     return redirect(url_for('login'))
 
 # --- الجزء التاني (ده لازم يكون آآآآخر سطرين في الملف خالص) ---
+# --- ده الجزء الأخير في app.py ---
+
+# انقل السطرين دول برا الـ if خالص تحت الـ Routes
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # دي اللي هتحل مشكلة الـ Error وتبني الجداول
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
