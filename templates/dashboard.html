@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* 1. تنسيقات الثيمات وقت التصوير (الستوري) */
+    /* 1. تنسيقات الثيمات وقت التصوير */
     .theme-dark-gold, .theme-neon, .theme-dark {
         padding: 60px 40px !important;
         border-radius: 30px !important;
@@ -13,7 +13,6 @@
         text-align: center !important;
     }
 
-    /* الذهبي الملكي */
     .theme-dark-gold {
         background: linear-gradient(145deg, #0a0a0a, #1a1a1a) !important;
         border: 5px solid #d4af37 !important;
@@ -21,7 +20,6 @@
     }
     .theme-dark-gold p { color: #f1e5ac !important; font-size: 2rem !important; font-weight: bold !important; }
 
-    /* النيون الفوسفوري */
     .theme-neon {
         background: #000 !important;
         border: 5px solid #39ff14 !important;
@@ -29,7 +27,6 @@
     }
     .theme-neon p { color: #39ff14 !important; font-size: 2rem !important; text-shadow: 0 0 15px #39ff14 !important; }
 
-    /* الدارك الكلاسيك */
     .theme-dark {
         background: #111 !important;
         border: 5px solid #ffffff !important;
@@ -37,7 +34,7 @@
     }
     .theme-dark p { color: #fff !important; font-size: 2rem !important; }
 
-    /* 2. إخفاء الزوائد وقت التصوير فقط */
+    /* 2. إخفاء الزوائد وقت التصوير */
     .view-shooting .premium-info, 
     .view-shooting small, 
     .view-shooting .delete-form,
@@ -45,7 +42,7 @@
         display: none !important;
     }
 
-    /* 3. ستايل مربعات الاختيار في المودال */
+    /* 3. ستايل المربعات في المودال */
     .theme-opt {
         cursor: pointer;
         transition: 0.2s;
@@ -57,25 +54,14 @@
     }
     .theme-opt:hover { transform: scale(1.1); }
 
-    /* أيقونة المسح */
-    .trash-icon {
-        color: #dc3545;
-        border: none;
-        background: none;
-        padding: 5px;
-        transition: 0.2s;
-    }
-    .trash-icon:hover { color: #a71d2a; transform: scale(1.1); }
+    .trash-icon { color: #dc3545; border: none; background: none; padding: 5px; }
 </style>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
         <div class="card shadow-sm p-4 mb-4 border-0" style="border-radius: 20px;">
-            <h3 class="fw-bold">Welcome, {{ current_user.username }}!</h3>
-            <p class="text-muted">Copy your link and share it on Instagram/Snapchat</p>
-            <div class="input-group mb-3">
+            <h3 class="fw-bold text-dark">Welcome, {{ current_user.username }}!</h3>
+            <div class="input-group mb-3 mt-3">
                 <input type="text" id="myLink" class="form-control text-center bg-light border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
                 <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy</button>
             </div>
@@ -102,7 +88,11 @@
                                 <span class="badge bg-light text-success border me-2" style="font-size: 0.65rem;">
                                     <i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}
                                 </span>
-                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 btn-share-trigger fw-bold" style="font-size: 0.7rem;" onclick="openThemeModal('{{ msg.id }}')">
+                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 btn-share-trigger fw-bold" 
+                                        style="font-size: 0.7rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#themeModal" 
+                                        onclick="activeMsgId = '{{ msg.id }}'">
                                     <i class="bi bi-instagram me-1"></i> Share
                                 </button>
                             {% else %}
@@ -114,14 +104,12 @@
                     </div>
 
                     <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="delete-form position-absolute top-0 end-0 m-2">
-                        <button type="submit" class="trash-icon" onclick="return confirm('Delete this message?')">
+                        <button type="submit" class="trash-icon" onclick="return confirm('Delete?')">
                             <i class="bi bi-trash3-fill" style="font-size: 1.2rem;"></i>
                         </button>
                     </form>
                 </div>
             </div>
-            {% else %}
-            <div class="text-center py-5 text-muted">No messages yet. Share your link!</div>
             {% endfor %}
         </div>
     </div>
@@ -131,29 +119,20 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
       <div class="modal-header bg-dark text-white border-0" style="border-radius: 20px 20px 0 0;">
-        <h5 class="modal-title fw-bold">Choose Story Style 🎨</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title fw-bold text-center w-100">Choose Story Style 🎨</h5>
       </div>
-      <div class="modal-body py-5 bg-light d-flex justify-content-around" style="border-radius: 0 0 20px 20px;">
-            <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">Gold</div>
-            <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 90px; height: 90px; background: #000; border: 3px solid #39ff14; color: #39ff14;">Neon</div>
-            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #1a1a1a; border: 3px solid #fff; color: #fff;">Dark</div>
+      <div class="modal-body py-5 bg-light d-flex justify-content-around">
+            <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 85px; height: 85px; background: #000; border: 3px solid #d4af37; color: #d4af37;">Gold</div>
+            <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 85px; height: 85px; background: #000; border: 3px solid #39ff14; color: #39ff14;">Neon</div>
+            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 85px; height: 85px; background: #1a1a1a; border: 3px solid #fff; color: #fff;">Dark</div>
       </div>
     </div>
   </div>
 </div>
 
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-
 <script>
 let activeMsgId = null;
-let bootstrapModal = null;
-
-// تجهيز المودال عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', function() {
-    const modalEl = document.getElementById('themeModal');
-    bootstrapModal = new bootstrap.Modal(modalEl);
-});
 
 function copyLink() {
     var copyText = document.getElementById("myLink");
@@ -162,40 +141,26 @@ function copyLink() {
     alert("Link Copied! 🚀");
 }
 
-function openThemeModal(msgId) {
-    activeMsgId = msgId;
-    if (bootstrapModal) {
-        bootstrapModal.show();
-    }
-}
-
 function downloadStory(themeClass) {
+    if (!activeMsgId) return;
     const card = document.getElementById('msg-card-' + activeMsgId);
-    if (!card) return;
-
     const originalClass = card.className;
 
-    // تفعيل وضع التصوير والثيم المختار
     card.classList.add(themeClass);
     card.classList.add('view-shooting');
 
-    // تصوير الكارت بجودة عالية
-    html2canvas(card, { 
-        scale: 3, 
-        backgroundColor: null,
-        useCORS: true 
-    }).then(canvas => {
+    html2canvas(card, { scale: 3, backgroundColor: null, useCORS: true }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `SecretStory_${activeMsgId}.png`;
+        link.download = `Story_${activeMsgId}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
 
-        // إرجاع الشكل الأصلي وقفل المودال
         card.className = originalClass;
-        bootstrapModal.hide();
-    }).catch(err => {
-        console.error("Capture Error:", err);
-        alert("Failed to generate image.");
+        
+        // قفل المودال
+        const modalEl = document.getElementById('themeModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     });
 }
 </script>
