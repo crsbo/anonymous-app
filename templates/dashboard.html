@@ -41,22 +41,24 @@
     .theme-opt:hover { transform: translateY(-5px); }
     .premium-lock { position: absolute; top: -5px; right: -5px; font-size: 1.2rem; color: #ffc107; }
     
-    /* ستايل التايمر والتلميح */
+    /* ستايل اللعبة والنقاط */
+    .points-badge { background: linear-gradient(45deg, #FFD700, #FFA500); color: black; font-weight: 900; border: none; }
+    .quiz-option { cursor: pointer; transition: 0.2s; border: 1px solid #ddd; background: #fff; padding: 10px; border-radius: 12px; font-size: 0.85rem; }
+    .quiz-option:hover { background: #f0f0f0; border-color: #333; }
     .hint-badge { background: #f8f9fa; border: 1px solid #eee; color: #666; font-size: 0.75rem; border-radius: 10px; padding: 5px 12px; display: inline-block; }
     .timer-box { font-size: 0.8rem; font-weight: bold; color: #d4af37; }
-    .verified-badge { color: #007bff; font-size: 1.1rem; vertical-align: middle; }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
         <div class="card shadow-sm p-4 mb-4 border-0 dashboard-ui" style="border-radius: 20px;">
-            <h3 class="fw-bold">
-                Welcome, {{ current_user.username }} 
-                {% if current_user.is_premium %}
-                <i class="bi bi-patch-check-fill verified-badge" title="Verified Account"></i>
-                {% endif %}
-            </h3>
-            <div class="input-group mb-3 mt-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fw-bold mb-0">Welcome, {{ current_user.username }}</h3>
+                <div class="badge points-badge p-2 px-3 rounded-pill shadow-sm">
+                    <i class="bi bi-trophy-fill me-1"></i> {{ current_user.points or 0 }} Points
+                </div>
+            </div>
+            <div class="input-group mb-3 mt-1 shadow-sm">
                 <input type="text" id="myLink" class="form-control text-center bg-white border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
                 <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy Link</button>
             </div>
@@ -72,6 +74,21 @@
                     <div class="dashboard-ui p-4">
                         <p class="mb-3 fs-5 fw-medium text-dark">{{ msg.content }}</p>
                         
+                        {% if msg.correct_name and not msg.is_guessed %}
+                        <div class="bg-light p-3 rounded-4 mb-3 border shadow-sm">
+                            <p class="small fw-bold mb-2 text-dark">Who sent this? Guess & Earn +1 Pt 🎯</p>
+                            <div class="d-grid gap-2">
+                                <button class="quiz-option fw-bold" onclick="submitGuess({{msg.id}}, '{{msg.name_opt_1}}')">{{msg.name_opt_1}}</button>
+                                <button class="quiz-option fw-bold" onclick="submitGuess({{msg.id}}, '{{msg.name_opt_2}}')">{{msg.name_opt_2}}</button>
+                                <button class="quiz-option fw-bold" onclick="submitGuess({{msg.id}}, '{{msg.name_opt_3}}')">{{msg.name_opt_3}}</button>
+                            </div>
+                        </div>
+                        {% elif msg.is_guessed %}
+                        <div class="badge bg-success w-100 p-2 mb-3 rounded-pill">
+                            <i class="bi bi-check-circle-fill"></i> Solved! You earned a point.
+                        </div>
+                        {% endif %}
+
                         {% if msg.hint %}
                         <div class="mb-3">
                             <div class="hint-badge shadow-sm">
@@ -80,29 +97,14 @@
                         </div>
                         {% endif %}
 
-                        {% if msg.sender_name and msg.reveal_time %}
-                        <div class="mb-3 p-2 rounded-3 bg-light d-inline-block border">
-                            {% if now > msg.reveal_time %}
-                                <span class="text-success small fw-bold">
-                                    <i class="bi bi-person-check-fill me-1"></i> Revealed: {{ msg.sender_name }}
-                                </span>
-                            {% else %}
-                                <span class="timer-box" data-endtime="{{ msg.reveal_time.isoformat() }}">
-                                    <i class="bi bi-hourglass-split me-1"></i> Reveal In: <span class="countdown">--:--:--</span>
-                                </span>
-                            {% endif %}
-                        </div>
-                        {% endif %}
-
-                        <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center justify-content-between mt-3">
                             <small class="text-muted"><i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}</small>
                             <div class="d-flex align-items-center">
                                 {% if current_user.is_premium %}
                                     <span class="badge bg-light text-primary border me-1"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</span>
-                                    <span class="badge bg-light text-success border me-2"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}</span>
                                 {% else %}
                                     <a href="{{ url_for('upgrade') }}" class="text-warning text-decoration-none me-3 small fw-bold">
-                                        <i class="bi bi-lock-fill"></i> Unlock Details
+                                        <i class="bi bi-lock-fill"></i> Reveal
                                     </a>
                                 {% endif %}
                                 <button class="btn btn-sm btn-dark rounded-pill py-1 px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
@@ -110,8 +112,9 @@
                                 </button>
                             </div>
                         </div>
+                        
                         <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
-                            <button type="submit" class="trash-icon" onclick="return confirm('Delete this message?')"><i class="bi bi-trash3-fill"></i></button>
+                            <button type="submit" class="trash-icon" onclick="return confirm('Delete?')"><i class="bi bi-trash3-fill"></i></button>
                         </form>
                     </div>
 
@@ -119,10 +122,9 @@
                         <div class="story-top-label text-center">ANONYMOUS MESSAGES</div>
                         <div class="story-body text-center">
                             <div class="story-msg">{{ msg.content }}</div>
-                            {% if current_user.is_premium %}
-                            <div class="story-badges-row d-flex gap-3 justify-content-center mt-3">
-                                <div class="story-badge-item text-white border p-2 rounded small"><i class="bi bi-phone"></i> {{ msg.device_info }}</div>
-                                <div class="story-badge-item text-white border p-2 rounded small"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info }}</div>
+                            {% if msg.is_guessed %}
+                            <div class="badge bg-warning text-dark p-2 mt-2 px-4 rounded-pill fw-bold">
+                                🏆 I GUESSED THE SENDER! +1 POINT
                             </div>
                             {% endif %}
                         </div>
@@ -140,7 +142,6 @@
       <div class="modal-header bg-dark text-white border-0 py-3"><h5 class="modal-title fw-bold w-100 text-center">Select Style 🎨</h5></div>
       <div class="modal-body py-5 bg-light d-flex justify-content-around">
             <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #222; border: 3px solid #fff; color: #fff;">Dark</div>
-            
             <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-dark-gold')"{% else %}onclick="window.location.href='{{ url_for('upgrade') }}'"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">
                 {% if not current_user.is_premium %}<i class="bi bi-lock-fill premium-lock"></i>{% endif %}Gold
             </div>
@@ -155,41 +156,43 @@
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script>
 let activeMsgId = null;
-function copyLink() {
-    var copyText = document.getElementById("myLink"); copyText.select(); document.execCommand("copy"); alert("Link Copied! 🚀");
-}
 
-// كود التايمر (Countdown Timer)
-function updateTimers() {
-    document.querySelectorAll('.timer-box').forEach(box => {
-        const endTime = new Date(box.dataset.endtime).getTime();
-        const now = new Date().getTime();
-        const distance = endTime - now;
-
-        if (distance < 0) {
-            box.innerHTML = '<i class="bi bi-person-check-fill me-1 text-success"></i> Refresh to reveal name';
-            return;
+function submitGuess(msgId, answer) {
+    fetch(`/check_answer/${msgId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({answer: answer})
+    }).then(res => res.json()).then(data => {
+        if(data.status === 'correct') {
+            alert("Correct! 🏆 You earned +1 Point.");
+            location.reload();
+        } else if(data.status === 'wrong') {
+            alert("Wrong Answer! Try again.");
+        } else {
+            alert(data.message);
         }
-
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        box.querySelector('.countdown').innerText = 
-            (hours < 10 ? "0" + hours : hours) + ":" + 
-            (minutes < 10 ? "0" + minutes : minutes) + ":" + 
-            (seconds < 10 ? "0" + seconds : seconds);
     });
 }
-setInterval(updateTimers, 1000);
+
+function copyLink() {
+    var copyText = document.getElementById("myLink"); 
+    copyText.select(); 
+    document.execCommand("copy"); 
+    alert("Link Copied! 🚀");
+}
 
 function downloadStory(themeClass) {
     if (!activeMsgId) return;
     const card = document.getElementById('msg-card-' + activeMsgId);
     const originalClass = card.className;
-    card.classList.add(themeClass); card.classList.add('view-shooting');
-    html2canvas(card, { width: 1080, height: 1920, scale: 2, backgroundColor: null, useCORS: true }).then(canvas => {
-        const link = document.createElement('a'); link.download = `Story.png`; link.href = canvas.toDataURL("image/png"); link.click();
+    card.classList.add(themeClass); 
+    card.classList.add('view-shooting');
+    
+    html2canvas(card, { width: 1080, height: 1920, scale: 2, useCORS: true }).then(canvas => {
+        const link = document.createElement('a'); 
+        link.download = `Story_Guess.png`; 
+        link.href = canvas.toDataURL("image/png"); 
+        link.click();
         card.className = originalClass;
         bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
     });
