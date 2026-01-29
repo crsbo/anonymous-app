@@ -9,8 +9,7 @@ import arrow
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 
-# --- الجزء الأول (بيتحط في نص الكود بعد الـ app مباشرة) ---
-# التعديل ده عشان يقرأ الـ DATABASE_URL بتاعة ريلواي صح
+# إعداد قاعدة البيانات
 uri = os.environ.get('DATABASE_URL', 'sqlite:///anonymous_app.db')
 if uri and uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
@@ -21,28 +20,26 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- الـ Models (الجداول) ---
+# --- الجداول (Models) بعد التحديث ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    is_premium = db.Column(db.Boolean, default=False) # ميزة البريميوم
     messages = db.relationship('Message', backref='receiver', lazy=True)
-    is_premium = db.Column(db.Boolean, default=False)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    device_info = db.Column(db.String(100)) # نوع الموبايل
-    location_info = db.Column(db.String(100)) # البلد (عن طريق الـ IP)
+    device_info = db.Column(db.String(100)) # لتخزين نوع الجهاز
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- هنا الـ Routes بتاعتك (register, login, dashboard, etc.) ---
-# (أنا اختصرتهم هنا عشان الكود ميبقاش طويل، بس هما موجودين في ملفك الأصلي)
+# --- المسارات (Routes) ---
 
 @app.route('/')
 def index():
@@ -84,11 +81,29 @@ def send_message(username):
     user = User.query.filter_by(username=username).first_or_404()
     if request.method == 'POST':
         content = request.form.get('content')
+        
+        # كود سحب معلومات الجهاز (Device Detection)
+        agent = request.headers.get('User-Agent', '')
+        device = "PC/Laptop"
+        if "iPhone" in agent: device = "iPhone"
+        elif "Android" in agent: device = "Android"
+        elif "Mobile" in agent: device = "Mobile Device"
+
         if content:
-            db.session.add(Message(content=content, user_id=user.id))
+            new_msg = Message(content=content, user_id=user.id, device_info=device)
+            db.session.add(new_msg)
             db.session.commit()
             return "<h1>Sent Successfully!</h1><a href='/'>Back</a>"
     return render_template('send_msg.html', user=user)
+
+# رابط سري ليك عشان تفعل البريميوم لنفسك وتجرب
+@app.route('/be-pro')
+@login_required
+def be_pro():
+    current_user.is_premium = True
+    db.session.commit()
+    flash("You are now a Premium user! 🚀")
+    return redirect(url_for('dashboard'))
 
 @app.route('/delete/<int:msg_id>', methods=['POST'])
 @login_required
@@ -103,23 +118,18 @@ def delete_message(msg_id):
 def logout():
     logout_user()
     return redirect(url_for('login'))
-    
+
+# محول الوقت (منذ دقيقة، ساعة..)
 @app.context_processor
 def utility_processor():
     def format_date(date):
-        # دي بتحول الوقت لشكل "منذ..." باللغة العربية أو الإنجليزية
-        return arrow.get(date).humanize() # لو عايزها إنجليزي شيل locale='ar'
+        return arrow.get(date).humanize()
     return dict(format_date=format_date)
-# --- الجزء التاني (ده لازم يكون آآآآخر سطرين في الملف خالص) ---
-# --- ده الجزء الأخير في app.py ---
 
-# انقل السطرين دول برا الـ if خالص تحت الـ Routes
+# تشغيل السيرفر وبناء الجداول
 with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
-
-
