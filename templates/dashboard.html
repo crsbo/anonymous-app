@@ -1,81 +1,88 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* 1. إعدادات صورة الاستوري (الوضع اللي بيتصور) */
+    /* 1. إعدادات صورة الاستوري */
     .view-shooting {
         width: 1080px !important; height: 1920px !important;
         display: flex !important; align-items: center !important; justify-content: center !important;
         border: none !important; border-radius: 0 !important;
     }
 
-    /* المربع اللي بيظهر في الصورة بس */
     .story-card-wrapper {
-        width: 85% !important; border-radius: 40px !important;
-        overflow: hidden !important; display: none; /* مخفي في العادي */
-        box-shadow: 0 30px 60px rgba(0,0,0,0.6) !important;
+        width: 85% !important; border-radius: 45px !important;
+        overflow: hidden !important; display: none;
+        box-shadow: 0 35px 70px rgba(0,0,0,0.7) !important;
     }
     .view-shooting .story-card-wrapper { display: block !important; }
 
-    /* ستايل العنوان والرسالة جوه الصورة */
-    .story-top-label { padding: 30px !important; font-size: 1.8rem !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: 3px; }
-    .story-body { background: rgba(0,0,0,0.9) !important; padding: 80px 40px !important; min-height: 400px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
-    .story-msg { font-size: 2.5rem !important; line-height: 1.3; font-weight: 600; color: #fff !important; margin-bottom: 40px !important; }
+    /* تنسيق العنوان والرسالة */
+    .story-top-label { padding: 35px !important; font-size: 2rem !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: 4px; }
+    .story-body { background: rgba(0,0,0,0.92) !important; padding: 90px 45px !important; min-height: 450px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
+    .story-msg { font-size: 2.6rem !important; line-height: 1.4; font-weight: 600; color: #fff !important; margin-bottom: 40px !important; }
 
-    /* ستايل البيانات (الموبايل واللوكيشن) جوه الصورة */
-    .story-badges-row { display: flex !important; gap: 15px !important; }
-    .story-badge-item { padding: 10px 20px !important; border-radius: 12px !important; font-size: 1.2rem !important; font-weight: bold !important; border: 2px solid; background: rgba(255,255,255,0.05) !important; }
+    /* ستايل البيانات (الموبايل واللوكيشن) */
+    .story-badges-row { display: flex !important; gap: 18px !important; }
+    .story-badge-item { padding: 12px 22px !important; border-radius: 14px !important; font-size: 1.3rem !important; font-weight: bold !important; border: 2px solid; background: rgba(255,255,255,0.08) !important; }
 
-    /* ألوان الثيمات */
+    /* ألوان الثيمات المعدلة */
+    /* 1. ثيم الدارك (المجاني - متظبط) */
+    .theme-dark.view-shooting { background: #121212 !important; }
+    .theme-dark .story-card-wrapper { border: 7px solid #ffffff !important; }
+    .theme-dark .story-top-label { background: #ffffff !important; color: #000000 !important; }
+    .theme-dark .story-badge-item { color: #ffffff !important; border-color: #ffffff !important; }
+
+    /* 2. ثيم الجولد (بريميوم) */
     .theme-dark-gold.view-shooting { background: #000 !important; }
-    .theme-dark-gold .story-card-wrapper { border: 6px solid #d4af37 !important; }
+    .theme-dark-gold .story-card-wrapper { border: 7px solid #d4af37 !important; }
     .theme-dark-gold .story-top-label { background: #d4af37 !important; color: #000 !important; }
     .theme-dark-gold .story-badge-item { color: #d4af37 !important; border-color: #d4af37 !important; }
 
+    /* 3. ثيم النيون (بريميوم) */
     .theme-neon.view-shooting { background: #050505 !important; }
-    .theme-neon .story-card-wrapper { border: 6px solid #39ff14 !important; }
+    .theme-neon .story-card-wrapper { border: 7px solid #39ff14 !important; }
     .theme-neon .story-top-label { background: #39ff14 !important; color: #000 !important; }
     .theme-neon .story-badge-item { color: #39ff14 !important; border-color: #39ff14 !important; }
 
-    /* إخفاء محتوى الداشبورد وقت التصوير */
+    /* إخفاء واجهة الموقع وقت التصوير */
     .view-shooting .dashboard-ui { display: none !important; }
 
-    /* تنسيقات الداشبورد العادية */
-    .trash-icon { color: #dc3545; border: none; background: none; }
-    .theme-opt { cursor: pointer; transition: 0.2s; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-    .theme-opt:hover { transform: scale(1.1); }
+    /* تنسيقات الداشبورد */
+    .trash-icon { color: #dc3545; border: none; background: none; transition: 0.2s; }
+    .trash-icon:hover { transform: scale(1.2); }
+    .theme-opt { cursor: pointer; transition: 0.3s; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; position: relative; }
+    .theme-opt:hover { transform: translateY(-5px); }
+    .premium-lock { position: absolute; top: -5px; right: -5px; font-size: 1.2rem; color: #ffc107; }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
         <div class="card shadow-sm p-4 mb-4 border-0 dashboard-ui" style="border-radius: 20px;">
             <h3 class="fw-bold">Welcome, {{ current_user.username }}!</h3>
-            <div class="input-group mb-3 mt-3">
-                <input type="text" id="myLink" class="form-control text-center bg-light border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
-                <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy</button>
+            <div class="input-group mb-3 mt-3 shadow-sm">
+                <input type="text" id="myLink" class="form-control text-center bg-white border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
+                <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy Link</button>
             </div>
             <div class="badge bg-primary p-2 px-4 rounded-pill">Inbox: {{ count }} Messages</div>
         </div>
 
-        <h5 class="text-start mb-3 fw-bold dashboard-ui">My Messages</h5>
+        <h5 class="text-start mb-3 fw-bold dashboard-ui">Messages</h5>
         <div class="row">
             {% for msg in messages %}
             <div class="col-12 mb-3">
                 <div id="msg-card-{{ msg.id }}" class="card shadow-sm text-start position-relative border-0" style="border-radius: 20px; background: white; overflow: hidden;">
                     
                     <div class="dashboard-ui p-4">
-                        <p class="mb-3 fs-5 fw-medium text-dark">{{ msg.content }}</p>
-                        <div class="d-flex align-items-center justify-content-between mt-2">
+                        <p class="mb-4 fs-5 fw-medium text-dark">{{ msg.content }}</p>
+                        <div class="d-flex align-items-center justify-content-between">
                             <small class="text-muted"><i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}</small>
-                            <div class="premium-info d-flex align-items-center">
+                            <div class="d-flex align-items-center">
                                 {% if current_user.is_premium %}
                                     <span class="badge bg-light text-primary border me-1"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</span>
                                     <span class="badge bg-light text-success border me-2"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}</span>
-                                    <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
-                                        <i class="bi bi-instagram me-1"></i> Share
-                                    </button>
-                                {% else %}
-                                    <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked Details</span>
                                 {% endif %}
+                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
+                                    <i class="bi bi-instagram me-1"></i> Share
+                                </button>
                             </div>
                         </div>
                         <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
@@ -95,7 +102,6 @@
                             {% endif %}
                         </div>
                     </div>
-
                 </div>
             </div>
             {% endfor %}
@@ -105,12 +111,17 @@
 
 <div class="modal fade" id="themeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-      <div class="modal-header bg-dark text-white border-0 text-center"><h5 class="modal-title fw-bold w-100">Choose Style 🎨</h5></div>
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
+      <div class="modal-header bg-dark text-white border-0 py-3"><h5 class="modal-title fw-bold w-100 text-center">Select Style 🎨</h5></div>
       <div class="modal-body py-5 bg-light d-flex justify-content-around">
-            <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 85px; height: 85px; background: #000; border: 3px solid #d4af37; color: #d4af37;">Gold</div>
-            <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 85px; height: 85px; background: #000; border: 3px solid #39ff14; color: #39ff14;">Neon</div>
-            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 85px; height: 85px; background: #1a1a1a; border: 3px solid #fff; color: #fff;">Dark</div>
+            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #222; border: 3px solid #fff; color: #fff;">Dark</div>
+            
+            <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-dark-gold')"{% else %}onclick="alert('Unlock with Premium! 🏆')"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">
+                {% if not current_user.is_premium %}<i class="bi bi-lock-fill premium-lock"></i>{% endif %}Gold
+            </div>
+            <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-neon')"{% else %}onclick="alert('Unlock with Premium! 🏆')"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #39ff14; color: #39ff14;">
+                {% if not current_user.is_premium %}<i class="bi bi-lock-fill premium-lock"></i>{% endif %}Neon
+            </div>
       </div>
     </div>
   </div>
