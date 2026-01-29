@@ -88,20 +88,20 @@ def login():
 @login_required
 def dashboard():
     messages = Message.query.filter_by(user_id=current_user.id).order_by(Message.timestamp.desc()).all()
-    return render_template('dashboard.html', messages=messages, count=len(messages), now=datetime.utcnow())
+    # جلب أفضل 5 لاعبين للـ Leaderboard
+    top_users = User.query.order_by(User.points.desc()).limit(5).all()
+    return render_template('dashboard.html', messages=messages, count=len(messages), top_users=top_users, now=datetime.utcnow())
 
 @app.route('/user/<username>', methods=['GET', 'POST'])
 def send_message(username):
     user = User.query.filter_by(username=username).first_or_404()
     if request.method == 'POST':
         content = request.form.get('content')
-        
-        # استلام الأسماء الـ 3
         opt1 = request.form.get('opt1')
         opt2 = request.form.get('opt2')
         opt3 = request.form.get('opt3')
         
-        # المنطق الجديد: تحديد مين الاسم الصح بناءً على اختيار المرسل
+        # تحديد الاسم الصحيح المختار
         correct_choice = request.form.get('correct')
         final_correct_name = None
         if correct_choice == "1": final_correct_name = opt1
@@ -116,15 +116,18 @@ def send_message(username):
         agent = request.headers.get('User-Agent', '')
         device = "iPhone" if "iPhone" in agent else "Android" if "Android" in agent else "PC"
 
-        new_msg = Message(
-            content=content, user_id=user.id, device_info=device, location_info="Remote",
-            hint=hint, sender_name=sender_name, reveal_time=reveal_date,
-            name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, 
-            correct_name=final_correct_name # بنسجل الاسم الحقيقي كإجابة صحيحة
-        )
-        db.session.add(new_msg)
-        db.session.commit()
-        return "<h1>Sent Successfully!</h1><a href='/'>Back</a>"
+        if content:
+            new_msg = Message(
+                content=content, user_id=user.id, device_info=device, location_info="Remote",
+                hint=hint, sender_name=sender_name, reveal_time=reveal_date,
+                name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, 
+                correct_name=final_correct_name
+            )
+            db.session.add(new_msg)
+            db.session.commit()
+            flash("Your secret message has been sent! 🚀")
+            return redirect(url_for('send_message', username=username))
+            
     return render_template('send_msg.html', user=user)
 
 @app.route('/check_answer/<int:msg_id>', methods=['POST'])
@@ -135,7 +138,6 @@ def check_answer(msg_id):
     if msg.is_guessed:
         return jsonify({"status": "already_guessed", "message": "Already answered!"})
     
-    # مقارنة الاسم اللي المستلم اختاره بالاسم الصح اللي المرسل حدده
     if selected == msg.correct_name:
         current_user.points += 1
         msg.is_guessed = True
@@ -177,14 +179,10 @@ def utility_processor():
         return arrow.get(date).humanize()
     return dict(format_date=format_date)
 
+# --- استقرار قاعدة البيانات ---
 with app.app_context():
-    try:
-        # شيل drop_all بعد أول تجربة عشان الداتابيز تثبت
-        db.drop_all() 
-        db.create_all()
-        print("Database Rebuilt with Guessing Game Logic!")
-    except Exception as e:
-        print(f"Error: {e}")
+    db.create_all() # إنشاء الجداول لو مش موجودة بدون مسح القديم
+    print("Database is stable and ready.")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
