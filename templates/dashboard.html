@@ -1,5 +1,48 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    /* تنسيقات الثيمات وقت التصوير */
+    .theme-dark-gold {
+        background: linear-gradient(145deg, #0f0f0f, #1e1e1e) !important;
+        border: 4px solid #d4af37 !important;
+        color: #d4af37 !important;
+        padding: 40px !important;
+        border-radius: 20px !important;
+    }
+    .theme-dark-gold p { color: #f1e5ac !important; font-size: 1.6rem !important; text-align: center; }
+
+    .theme-neon {
+        background: #000 !important;
+        border: 4px solid #39ff14 !important;
+        color: #39ff14 !important;
+        padding: 40px !important;
+        border-radius: 20px !important;
+    }
+    .theme-neon p { color: #39ff14 !important; font-size: 1.6rem !important; text-shadow: 0 0 10px #39ff14; text-align: center; }
+
+    .theme-dark {
+        background: #1a1a1a !important;
+        border: 4px solid #444 !important;
+        color: #ffffff !important;
+        padding: 40px !important;
+        border-radius: 20px !important;
+    }
+    .theme-dark p { color: #fff !important; font-size: 1.6rem !important; text-align: center; }
+    
+    /* ستايل مربعات الاختيار في المودال */
+    .theme-opt {
+        cursor: pointer;
+        transition: transform 0.2s;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+    .theme-opt:hover { transform: scale(1.1); }
+</style>
+
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
         <div class="card shadow-sm p-4 mb-4">
@@ -24,47 +67,95 @@
                             <i class="bi bi-clock"></i> {{ format_date(msg.timestamp) }}
                         </small>
 
-                        <div class="premium-info">
+                        <div class="premium-info d-flex align-items-center">
                             {% if current_user.is_premium %}
-                                <span class="badge bg-light text-primary border" style="font-size: 0.65rem;">
+                                <span class="badge bg-light text-primary border me-1" style="font-size: 0.65rem;">
                                     <i class="bi bi-phone"></i> {{ msg.device_info or 'Unknown' }}
                                 </span>
-                                <span class="badge bg-light text-success border ms-1" style="font-size: 0.65rem;">
-                                    <i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Unknown Location' }}
+                                <span class="badge bg-light text-success border me-2" style="font-size: 0.65rem;">
+                                    <i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Global' }}
                                 </span>
+                                <button class="btn btn-sm btn-outline-dark rounded-pill py-0 px-2" style="font-size: 0.7rem;" onclick="openThemeModal('{{ msg.id }}')">
+                                    <i class="bi bi-instagram"></i> Share
+                                </button>
                             {% else %}
-                                <span class="text-muted" style="font-size: 0.65rem; cursor: pointer;" title="Upgrade to see info">
-                                    <i class="bi bi-lock-fill"></i> <span class="d-none d-sm-inline">Details locked</span>
+                                <span class="text-muted" style="font-size: 0.65rem;" title="Upgrade for info">
+                                    <i class="bi bi-lock-fill"></i> Details Locked
                                 </span>
                             {% endif %}
                         </div>
                     </div>
 
                     <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
-                        <button type="submit" class="btn btn-link text-danger p-1" onclick="return confirm('Delete this message?')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="red" viewBox="0 0 16 16">
-                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                            </svg>
+                        <button type="submit" class="btn btn-link text-danger p-1" onclick="return confirm('Delete?')">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </form>
                 </div>
             </div>
             {% else %}
-            <div class="text-center py-5">
-                <p class="text-muted">Your inbox is empty. Share your link to get messages!</p>
-            </div>
+            <div class="text-center py-5 text-muted">No messages yet.</div>
             {% endfor %}
         </div>
     </div>
 </div>
 
+<div class="modal fade" id="themeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-dark text-white border-0">
+        <h5 class="modal-title">Choose Story Style 🎨</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body py-4">
+        <div class="d-flex justify-content-around">
+            <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 80px; height: 80px; background: #000; border: 2px solid #d4af37; color: #d4af37;">Gold</div>
+            <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 80px; height: 80px; background: #000; border: 2px solid #39ff14; color: #39ff14;">Neon</div>
+            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 80px; height: 80px; background: #1a1a1a; border: 2px solid #555; color: #fff;">Dark</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script>
+let activeMsgId = null;
+
 function copyLink() {
   var copyText = document.getElementById("myLink");
   copyText.select();
   document.execCommand("copy");
-  alert("Link copied! Now paste it in your bio.");
+  alert("Link copied!");
+}
+
+function openThemeModal(msgId) {
+    activeMsgId = msgId;
+    var myModal = new bootstrap.Modal(document.getElementById('themeModal'));
+    myModal.show();
+}
+
+function downloadStory(themeClass) {
+    const card = document.getElementById('msg-card-' + activeMsgId);
+    const originalClass = card.className;
+    const originalStyle = card.getAttribute('style');
+
+    // تطبيق الثيم
+    card.classList.add(themeClass);
+
+    html2canvas(card, { scale: 3, backgroundColor: null }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `story-${activeMsgId}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+
+        // إرجاع الشكل الأصلي
+        card.className = originalClass;
+        card.setAttribute('style', originalStyle);
+        
+        // إغلاق المودال
+        bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
+    });
 }
 </script>
 {% endblock %}
