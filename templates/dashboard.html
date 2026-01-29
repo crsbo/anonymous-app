@@ -1,56 +1,82 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* تنسيقات الثيمات وقت التصوير */
-    .theme-dark-gold {
-        background: linear-gradient(145deg, #0f0f0f, #1e1e1e) !important;
-        border: 4px solid #d4af37 !important;
-        color: #d4af37 !important;
-        padding: 40px !important;
-        border-radius: 20px !important;
+    /* 1. تنسيقات الثيمات وقت التصوير (الستوري) */
+    .theme-dark-gold, .theme-neon, .theme-dark {
+        padding: 80px 40px !important;
+        border-radius: 30px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 450px !important;
+        text-align: center !important;
     }
-    .theme-dark-gold p { color: #f1e5ac !important; font-size: 1.6rem !important; text-align: center; }
 
+    /* الثيم الذهبي الملكي */
+    .theme-dark-gold {
+        background: linear-gradient(145deg, #0a0a0a, #1a1a1a) !important;
+        border: 6px solid #d4af37 !important;
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.3) !important;
+    }
+    .theme-dark-gold p { 
+        color: #d4af37 !important; 
+        font-size: 2.2rem !important; 
+        font-weight: bold !important; 
+        margin: 0 !important;
+    }
+
+    /* ثيم النيون الفوسفوري */
     .theme-neon {
         background: #000 !important;
-        border: 4px solid #39ff14 !important;
-        color: #39ff14 !important;
-        padding: 40px !important;
-        border-radius: 20px !important;
+        border: 6px solid #39ff14 !important;
+        box-shadow: 0 0 30px rgba(57, 255, 20, 0.3) !important;
     }
-    .theme-neon p { color: #39ff14 !important; font-size: 1.6rem !important; text-shadow: 0 0 10px #39ff14; text-align: center; }
+    .theme-neon p { 
+        color: #39ff14 !important; 
+        font-size: 2.2rem !important; 
+        text-shadow: 0 0 15px #39ff14 !important;
+        margin: 0 !important;
+    }
 
+    /* ثيم الدارك الكلاسيك */
     .theme-dark {
-        background: #1a1a1a !important;
-        border: 4px solid #444 !important;
-        color: #ffffff !important;
-        padding: 40px !important;
-        border-radius: 20px !important;
+        background: #111 !important;
+        border: 6px solid #ffffff !important;
+        color: #fff !important;
     }
-    .theme-dark p { color: #fff !important; font-size: 1.6rem !important; text-align: center; }
-    
-    /* ستايل مربعات الاختيار في المودال */
+    .theme-dark p { color: #fff !important; font-size: 2.2rem !important; margin: 0 !important; }
+
+    /* 2. كود سحري لإخفاء الزوائد وقت التصوير فقط */
+    .view-shooting .premium-info, 
+    .view-shooting small, 
+    .view-shooting form,
+    .view-shooting .btn-share-trigger {
+        display: none !important;
+    }
+
+    /* 3. ستايل مربعات الاختيار في المودال */
     .theme-opt {
         cursor: pointer;
         transition: transform 0.2s;
-        border-radius: 12px;
+        border-radius: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 0.8rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     .theme-opt:hover { transform: scale(1.1); }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
-        <div class="card shadow-sm p-4 mb-4">
+        <div class="card shadow-sm p-4 mb-4 border-0" style="border-radius: 20px;">
             <h3 class="fw-bold text-dark">Welcome, {{ current_user.username }}!</h3>
             <p class="text-muted">Copy your link and share it on Instagram/Snapchat</p>
             <div class="input-group mb-3">
-                <input type="text" id="myLink" class="form-control text-center bg-light" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
-                <button class="btn btn-primary px-4" onclick="copyLink()">Copy Link</button>
+                <input type="text" id="myLink" class="form-control text-center bg-light border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
+                <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy</button>
             </div>
             <div class="d-inline-block badge bg-primary p-2 px-4 fs-6 rounded-pill shadow-sm">Inbox: {{ count }} Messages</div>
         </div>
@@ -59,8 +85,8 @@
         <div class="row">
             {% for msg in messages %}
             <div class="col-12 mb-3">
-                <div id="msg-card-{{ msg.id }}" class="card shadow-sm p-3 text-start position-relative border-0" style="background: #ffffff;">
-                    <p class="mb-2 text-dark fs-5">{{ msg.content }}</p>
+                <div id="msg-card-{{ msg.id }}" class="card shadow-sm p-3 text-start position-relative border-0" style="background: #ffffff; border-radius: 15px;">
+                    <p class="mb-2 text-dark fs-5 fw-medium">{{ msg.content }}</p>
                     
                     <div class="d-flex align-items-center justify-content-between mt-2">
                         <small class="text-muted" style="font-size: 0.7rem;">
@@ -75,11 +101,11 @@
                                 <span class="badge bg-light text-success border me-2" style="font-size: 0.65rem;">
                                     <i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Global' }}
                                 </span>
-                                <button class="btn btn-sm btn-outline-dark rounded-pill py-0 px-2" style="font-size: 0.7rem;" onclick="openThemeModal('{{ msg.id }}')">
+                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 fw-bold btn-share-trigger" style="font-size: 0.7rem;" onclick="openThemeModal('{{ msg.id }}')">
                                     <i class="bi bi-instagram"></i> Share
                                 </button>
                             {% else %}
-                                <span class="text-muted" style="font-size: 0.65rem;" title="Upgrade for info">
+                                <span class="text-muted" style="font-size: 0.65rem;">
                                     <i class="bi bi-lock-fill"></i> Details Locked
                                 </span>
                             {% endif %}
@@ -87,14 +113,14 @@
                     </div>
 
                     <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
-                        <button type="submit" class="btn btn-link text-danger p-1" onclick="return confirm('Delete?')">
-                            <i class="bi bi-trash"></i>
+                        <button type="submit" class="btn btn-link text-danger p-1" onclick="return confirm('Delete this message?')">
+                            <i class="bi bi-trash3-fill"></i>
                         </button>
                     </form>
                 </div>
             </div>
             {% else %}
-            <div class="text-center py-5 text-muted">No messages yet.</div>
+            <div class="text-center py-5 text-muted">Your inbox is empty.</div>
             {% endfor %}
         </div>
     </div>
@@ -102,16 +128,16 @@
 
 <div class="modal fade" id="themeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-dark text-white border-0">
-        <h5 class="modal-title">Choose Story Style 🎨</h5>
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
+      <div class="modal-header bg-dark text-white border-0" style="border-radius: 25px 25px 0 0;">
+        <h5 class="modal-title fw-bold">Premium Story Styles 🎨</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body py-4">
+      <div class="modal-body py-5 bg-light" style="border-radius: 0 0 25px 25px;">
         <div class="d-flex justify-content-around">
-            <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 80px; height: 80px; background: #000; border: 2px solid #d4af37; color: #d4af37;">Gold</div>
-            <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 80px; height: 80px; background: #000; border: 2px solid #39ff14; color: #39ff14;">Neon</div>
-            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 80px; height: 80px; background: #1a1a1a; border: 2px solid #555; color: #fff;">Dark</div>
+            <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">Gold</div>
+            <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 90px; height: 90px; background: #000; border: 3px solid #39ff14; color: #39ff14;">Neon</div>
+            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #1a1a1a; border: 3px solid #fff; color: #fff;">Dark</div>
         </div>
       </div>
     </div>
@@ -119,6 +145,7 @@
 </div>
 
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
 <script>
 let activeMsgId = null;
 
@@ -126,7 +153,7 @@ function copyLink() {
   var copyText = document.getElementById("myLink");
   copyText.select();
   document.execCommand("copy");
-  alert("Link copied!");
+  alert("Link copied! Share it now 🚀");
 }
 
 function openThemeModal(msgId) {
@@ -138,22 +165,25 @@ function openThemeModal(msgId) {
 function downloadStory(themeClass) {
     const card = document.getElementById('msg-card-' + activeMsgId);
     const originalClass = card.className;
-    const originalStyle = card.getAttribute('style');
 
-    // تطبيق الثيم
+    // 1. تفعيل وضع التصوير والثيم المختار
     card.classList.add(themeClass);
+    card.classList.add('view-shooting');
 
-    html2canvas(card, { scale: 3, backgroundColor: null }).then(canvas => {
+    // 2. تصوير الكارت بجودة 4K
+    html2canvas(card, { 
+        scale: 4, 
+        backgroundColor: null,
+        logging: false,
+        useCORS: true 
+    }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `story-${activeMsgId}.png`;
-        link.href = canvas.toDataURL();
+        link.download = `SecretMsg_${themeClass}.png`;
+        link.href = canvas.toDataURL("image/png");
         link.click();
 
-        // إرجاع الشكل الأصلي
+        // 3. إرجاع الشكل الأصلي وإغلاق المودال
         card.className = originalClass;
-        card.setAttribute('style', originalStyle);
-        
-        // إغلاق المودال
         bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
     });
 }
