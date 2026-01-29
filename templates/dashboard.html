@@ -16,7 +16,7 @@
         <div class="row">
             {% for msg in messages %}
             <div class="col-12 mb-3">
-                <div class="card shadow-sm p-3 text-start position-relative border-0" style="background: #ffffff;">
+                <div id="msg-card-{{ msg.id }}" class="card shadow-sm p-3 text-start position-relative border-0" style="background: #ffffff;">
                     <p class="mb-2 text-dark fs-5">{{ msg.content }}</p>
                     
                     <div class="d-flex align-items-center justify-content-between mt-2">
@@ -29,9 +29,12 @@
                                 <span class="badge bg-light text-primary border" style="font-size: 0.65rem;">
                                     <i class="bi bi-phone"></i> {{ msg.device_info or 'Unknown' }}
                                 </span>
+                                <span class="badge bg-light text-success border ms-1" style="font-size: 0.65rem;">
+                                    <i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Unknown Location' }}
+                                </span>
                             {% else %}
-                                <span class="text-muted" style="font-size: 0.65rem; cursor: pointer;" title="Upgrade to see device info">
-                                    <i class="bi bi-lock-fill"></i> <span class="d-none d-sm-inline">Device info locked</span>
+                                <span class="text-muted" style="font-size: 0.65rem; cursor: pointer;" title="Upgrade to see info">
+                                    <i class="bi bi-lock-fill"></i> <span class="d-none d-sm-inline">Details locked</span>
                                 </span>
                             {% endif %}
                         </div>
