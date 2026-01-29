@@ -26,21 +26,21 @@
                         <div class="input-group-text border-0 bg-white">
                             <input class="form-check-input mt-0" type="radio" name="correct" value="1" checked>
                         </div>
-                        <input type="text" name="opt1" class="form-control border-0 px-3" placeholder="First Name Option">
+                        <input type="text" name="opt1" class="form-control border-0 px-3" placeholder="Option 1">
                     </div>
 
                     <div class="input-group mb-2 shadow-sm rounded-3 overflow-hidden">
                         <div class="input-group-text border-0 bg-white">
                             <input class="form-check-input mt-0" type="radio" name="correct" value="2">
                         </div>
-                        <input type="text" name="opt2" class="form-control border-0 px-3" placeholder="Second Name Option">
+                        <input type="text" name="opt2" class="form-control border-0 px-3" placeholder="Option 2">
                     </div>
 
                     <div class="input-group mb-2 shadow-sm rounded-3 overflow-hidden">
                         <div class="input-group-text border-0 bg-white">
                             <input class="form-check-input mt-0" type="radio" name="correct" value="3">
                         </div>
-                        <input type="text" name="opt3" class="form-control border-0 px-3" placeholder="Third Name Option">
+                        <input type="text" name="opt3" class="form-control border-0 px-3" placeholder="Option 3">
                     </div>
                 </div>
 
@@ -77,6 +77,17 @@
                     Send Anonymously 🚀
                 </button>
             </form>
+
+            {% if current_user.is_authenticated and current_user.id != user.id %}
+            <div class="mt-4 pt-3 border-top">
+                <p class="small fw-bold text-muted mb-2">Want to compete with {{ user.username }}? 🏆</p>
+                <form action="{{ url_for('add_friend', friend_id=user.id) }}" method="POST">
+                    <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-4 shadow-sm">
+                        <i class="bi bi-person-plus-fill me-1"></i> Add to Friends Leaderboard
+                    </button>
+                </form>
+            </div>
+            {% endif %}
             
             <p class="text-muted mt-4" style="font-size: 0.7rem;">
                 <i class="bi bi-shield-lock-fill me-1"></i> Safe & Fully Anonymous
