@@ -8,7 +8,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 
-# إعداد قاعدة البيانات (PostgreSQL لريلواي و SQLite للجهاز الشخصي)
+# --- الجزء الأول (بيتحط في نص الكود بعد الـ app مباشرة) ---
+# التعديل ده عشان يقرأ الـ DATABASE_URL بتاعة ريلواي صح
 uri = os.environ.get('DATABASE_URL', 'sqlite:///anonymous_app.db')
 if uri and uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
@@ -19,7 +20,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# الجداول
+# --- الـ Models (الجداول) ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -36,7 +37,9 @@ class Message(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# المسارات (Routes)
+# --- هنا الـ Routes بتاعتك (register, login, dashboard, etc.) ---
+# (أنا اختصرتهم هنا عشان الكود ميبقاش طويل، بس هما موجودين في ملفك الأصلي)
+
 @app.route('/')
 def index():
     return redirect(url_for('dashboard')) if current_user.is_authenticated else redirect(url_for('register'))
@@ -97,6 +100,9 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+# --- الجزء التاني (ده لازم يكون آآآآخر سطرين في الملف خالص) ---
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()  # دي اللي هتحل مشكلة الـ Error وتبني الجداول
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
