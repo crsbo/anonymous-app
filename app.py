@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta # ضفنا timedelta هنا
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -21,23 +21,22 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- الجداول (Models) بعد التحديث ---
+# --- Models ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    is_premium = db.Column(db.Boolean, default=False) # ميزة البريميوم
+    is_premium = db.Column(db.Boolean, default=False)
     messages = db.relationship('Message', backref='receiver', lazy=True)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    # الخانات الجديدة
     hint = db.Column(db.String(100)) # التلميح
-    sender_name = db.Column(db.String(100)) # الاسم الحقيقي اللي هيتكشف
+    sender_name = db.Column(db.String(100)) # الاسم الحقيقي
     reveal_time = db.Column(db.DateTime) # وقت كشف الاسم
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    device_info = db.Column(db.String(100)) # لتخزين نوع الجهاز
+    device_info = db.Column(db.String(100))
     location_info = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -45,7 +44,7 @@ class Message(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- المسارات (Routes) ---
+# --- Routes ---
 
 @app.route('/')
 def index():
@@ -85,30 +84,35 @@ def upgrade():
 @login_required
 def dashboard():
     messages = Message.query.filter_by(user_id=current_user.id).order_by(Message.timestamp.desc()).all()
-    return render_template('dashboard.html', messages=messages, count=len(messages))
+    # بنبعت datetime.utcnow عشان التايمر يحسب الفرق في الصفحة
+    return render_template('dashboard.html', messages=messages, count=len(messages), now=datetime.utcnow())
 
 @app.route('/user/<username>', methods=['GET', 'POST'])
 def send_message(username):
     user = User.query.filter_by(username=username).first_or_404()
     if request.method == 'POST':
         content = request.form.get('content')
+        hint = request.form.get('hint') # استلام التلميح
+        sender_name = request.form.get('sender_name') # استلام الاسم
+        reveal_delay = int(request.form.get('reveal_delay', 0)) # استلام الساعات
         
-        # 1. تحديد نوع الجهاز
+        # حساب وقت الكشف
+        reveal_date = None
+        if sender_name and reveal_delay > 0:
+            reveal_date = datetime.utcnow() + timedelta(hours=reveal_delay)
+
+        # تحديد الجهاز
         agent = request.headers.get('User-Agent', '')
         device = "iPhone" if "iPhone" in agent else "Android" if "Android" in agent else "PC"
 
-        # 2. تحديد المدينة (مع حماية من الـ Errors)
+        # تحديد اللوكيشن
         location = "Unknown City"
         try:
-            # بنحاول نجيب الـ IP الحقيقي للمستخدم في ريلواي
             ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
-            
-            # بنجرب نجيب اللوكيشن، وبنحط timeout عشان الكود ميعلقش
             geo_res = requests.get(f'http://ip-api.com/json/{ip_addr}', timeout=3).json()
             if geo_res.get('status') == 'success':
                 location = f"{geo_res.get('city')}, {geo_res.get('country')}"
-        except Exception as e:
-            print(f"Location Error: {e}") # بيطبع الغلط في الـ Logs عندك
+        except:
             location = "Location Unavailable"
 
         if content:
@@ -116,16 +120,17 @@ def send_message(username):
                 content=content, 
                 user_id=user.id, 
                 device_info=device, 
-                location_info=location
+                location_info=location,
+                hint=hint,
+                sender_name=sender_name,
+                reveal_time=reveal_date
             )
             db.session.add(new_msg)
             db.session.commit()
             return "<h1>Sent Successfully!</h1><a href='/'>Back</a>"
             
     return render_template('send_msg.html', user=user)
-            
 
-# رابط سري ليك عشان تفعل البريميوم لنفسك وتجرب
 @app.route('/be-pro')
 @login_required
 def be_pro():
@@ -148,28 +153,18 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# محول الوقت (منذ دقيقة، ساعة..)
 @app.context_processor
 def utility_processor():
     def format_date(date):
         return arrow.get(date).humanize()
     return dict(format_date=format_date)
 
-# تشغيل السيرفر وبناء الجداول
-# التعديل ده هيجبر ريلواي يمسح الجداول القديمة ويبني الجديدة
 with app.app_context():
- # السطر ده بيبني الجداول الجديدة بالخانات الجديدة
     db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
-
-
-
-
-
 
 
 
