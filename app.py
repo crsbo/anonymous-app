@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import arrow
+import requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
@@ -82,20 +83,37 @@ def send_message(username):
     if request.method == 'POST':
         content = request.form.get('content')
         
-        # كود سحب معلومات الجهاز (Device Detection)
+        # 1. تحديد نوع الجهاز
         agent = request.headers.get('User-Agent', '')
-        device = "PC/Laptop"
-        if "iPhone" in agent: device = "iPhone"
-        elif "Android" in agent: device = "Android"
-        elif "Mobile" in agent: device = "Mobile Device"
+        device = "iPhone" if "iPhone" in agent else "Android" if "Android" in agent else "PC"
+
+        # 2. تحديد المدينة (Location)
+        # في ريلواي بنجيب الـ IP الحقيقي من X-Forwarded-For
+        ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0]
+        location = "Unknown City"
+        
+        try:
+            # بنبعت الـ IP لموقع خارجي عشان يطلعلنا المدينة
+            geo_res = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,city,country', timeout=5).json()
+            if geo_res.get('status') == 'success':
+                # بنخزن المدينة والدولة مع بعض
+                location = f"{geo_res.get('city')}, {geo_res.get('country')}"
+        except:
+            location = "Location Error"
 
         if content:
-            new_msg = Message(content=content, user_id=user.id, device_info=device)
+            # بنسيف البيانات دي في الجدول الجديد
+            new_msg = Message(
+                content=content, 
+                user_id=user.id, 
+                device_info=device, 
+                location_info=location
+            )
             db.session.add(new_msg)
             db.session.commit()
             return "<h1>Sent Successfully!</h1><a href='/'>Back</a>"
+            
     return render_template('send_msg.html', user=user)
-
 # رابط سري ليك عشان تفعل البريميوم لنفسك وتجرب
 @app.route('/be-pro')
 @login_required
@@ -135,5 +153,6 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
