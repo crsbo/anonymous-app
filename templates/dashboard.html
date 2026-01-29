@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* 1. Instagram Story Shooting Mode (NGL Style) */
+    /* 1. إعدادات صورة الاستوري (NGL Style) */
     .view-shooting {
         width: 1080px !important; height: 1920px !important;
         display: flex !important; align-items: center !important; justify-content: center !important;
@@ -15,32 +15,25 @@
     }
     .view-shooting .story-card-wrapper { display: block !important; }
 
-    /* Header and Message Styling in Image */
+    /* تنسيق النصوص جوه الصورة */
     .story-top-label { padding: 35px !important; font-size: 2rem !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: 4px; }
     .story-body { background: rgba(0,0,0,0.95) !important; padding: 90px 45px !important; min-height: 450px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
     .story-msg { font-size: 2.6rem !important; line-height: 1.4; font-weight: 600; color: #fff !important; margin-bottom: 40px !important; }
 
-    /* Badges (Device & Location) in Image */
-    .story-badges-row { display: flex !important; gap: 18px !important; }
-    .story-badge-item { padding: 12px 22px !important; border-radius: 14px !important; font-size: 1.3rem !important; font-weight: bold !important; border: 2px solid; background: rgba(255,255,255,0.08) !important; }
-
-    /* Themes Styling */
+    /* ألوان الثيمات */
     .theme-dark.view-shooting { background: #121212 !important; }
     .theme-dark .story-card-wrapper { border: 7px solid #ffffff !important; }
     .theme-dark .story-top-label { background: #ffffff !important; color: #000000 !important; }
-    .theme-dark .story-badge-item { color: #ffffff !important; border-color: #ffffff !important; }
 
     .theme-dark-gold.view-shooting { background: #000 !important; }
     .theme-dark-gold .story-card-wrapper { border: 7px solid #d4af37 !important; }
     .theme-dark-gold .story-top-label { background: #d4af37 !important; color: #000 !important; }
-    .theme-dark-gold .story-badge-item { color: #d4af37 !important; border-color: #d4af37 !important; }
 
     .theme-neon.view-shooting { background: #050505 !important; }
     .theme-neon .story-card-wrapper { border: 7px solid #39ff14 !important; }
     .theme-neon .story-top-label { background: #39ff14 !important; color: #000 !important; }
-    .theme-neon .story-badge-item { color: #39ff14 !important; border-color: #39ff14 !important; }
 
-    /* Dashboard UI */
+    /* واجهة الداشبورد */
     .view-shooting .dashboard-ui { display: none !important; }
     .trash-icon { color: #dc3545; border: none; background: none; transition: 0.2s; }
     .trash-icon:hover { transform: scale(1.2); }
@@ -76,7 +69,7 @@
                                     <span class="badge bg-light text-success border me-2"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}</span>
                                 {% else %}
                                     <a href="{{ url_for('upgrade') }}" class="text-warning text-decoration-none me-3 small fw-bold">
-                                        <i class="bi bi-lock-fill"></i> Reveal Info
+                                        <i class="bi bi-lock-fill"></i> Unlock Info
                                     </a>
                                 {% endif %}
                                 <button class="btn btn-sm btn-dark rounded-pill py-1 px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
@@ -94,9 +87,9 @@
                         <div class="story-body text-center">
                             <div class="story-msg">{{ msg.content }}</div>
                             {% if current_user.is_premium %}
-                            <div class="story-badges-row">
-                                <div class="story-badge-item"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</div>
-                                <div class="story-badge-item"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}</div>
+                            <div class="story-badges-row d-flex gap-3 justify-content-center mt-3">
+                                <div class="story-badge-item text-white border p-2 rounded small"><i class="bi bi-phone"></i> {{ msg.device_info }}</div>
+                                <div class="story-badge-item text-white border p-2 rounded small"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info }}</div>
                             </div>
                             {% endif %}
                         </div>
