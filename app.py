@@ -5,7 +5,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 import arrow
-import requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
@@ -27,6 +26,13 @@ class Friendship(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     friend_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+# جدول لتسجيل النقاط المستحقة مع التوقيت لمنع الغش المتكرر
+class PointLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_ip = db.Column(db.String(100), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow) # وقت الحصول على النقطة
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -51,6 +57,7 @@ class Message(db.Model):
     name_opt_3 = db.Column(db.String(50))
     correct_name = db.Column(db.String(50))
     is_guessed = db.Column(db.Boolean, default=False)
+    sender_ip = db.Column(db.String(100)) # لتخزين IP المرسل
     hint = db.Column(db.String(100))
     sender_name = db.Column(db.String(100))
     reveal_time = db.Column(db.DateTime)
@@ -111,16 +118,75 @@ def dashboard():
                            friends_top=friends_top,
                            now=datetime.utcnow())
 
-@app.route('/upgrade')
+@app.route('/user/<username>', methods=['GET', 'POST'])
+def send_message(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    if request.method == 'POST':
+        # الحصول على الـ IP الحقيقي للمرسل
+        ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
+        
+        content = request.form.get('content')
+        opt1 = request.form.get('opt1')
+        opt2 = request.form.get('opt2')
+        opt3 = request.form.get('opt3')
+        correct_choice = request.form.get('correct')
+        
+        final_correct_name = None
+        if correct_choice == "1": final_correct_name = opt1
+        elif correct_choice == "2": final_correct_name = opt2
+        elif correct_choice == "3": final_correct_name = opt3
+
+        new_msg = Message(
+            content=content, user_id=user.id, sender_ip=ip_addr,
+            name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, correct_name=final_correct_name
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+        flash("Sent! 🚀")
+        return redirect(url_for('send_message', username=username))
+    return render_template('send_msg.html', user=user)
+
+@app.route('/check_answer/<int:msg_id>', methods=['POST'])
 @login_required
-def upgrade():
-    return render_template('upgrade.html')
+def check_answer(msg_id):
+    msg = Message.query.get_or_404(msg_id)
+    selected = request.json.get('answer')
+    
+    if msg.is_guessed: return jsonify({"status": "already_guessed"})
+
+    if selected == msg.correct_name:
+        # حساب الوقت (أخر 24 ساعة)
+        time_threshold = datetime.utcnow() - timedelta(hours=24)
+        
+        # التأكد لو الجهاز ده ادى نقطة لليوزر ده في آخر 24 ساعة
+        recent_log = PointLog.query.filter(
+            PointLog.user_id == current_user.id,
+            PointLog.sender_ip == msg.sender_ip,
+            PointLog.timestamp >= time_threshold
+        ).first()
+        
+        msg.is_guessed = True 
+        
+        if not recent_log:
+            current_user.points += 1
+            new_log = PointLog(user_id=current_user.id, sender_ip=msg.sender_ip)
+            db.session.add(new_log)
+            db.session.commit()
+            return jsonify({"status": "correct", "points": current_user.points})
+        else:
+            db.session.commit()
+            return jsonify({
+                "status": "correct", 
+                "points": current_user.points, 
+                "message": "Correct! Come back after 24h for a new point from this device."
+            })
+            
+    return jsonify({"status": "wrong"})
 
 @app.route('/add_friend/<int:friend_id>', methods=['POST'])
 @login_required
 def add_friend(friend_id):
-    if friend_id == current_user.id:
-        return redirect(url_for('dashboard'))
+    if friend_id == current_user.id: return redirect(url_for('dashboard'))
     exists = Friendship.query.filter(
         ((Friendship.user_id == current_user.id) & (Friendship.friend_id == friend_id)) |
         ((Friendship.user_id == friend_id) & (Friendship.friend_id == current_user.id))
@@ -132,53 +198,10 @@ def add_friend(friend_id):
         flash("Friend added! 🤝")
     return redirect(url_for('dashboard'))
 
-@app.route('/user/<username>', methods=['GET', 'POST'])
-def send_message(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    if request.method == 'POST':
-        content = request.form.get('content')
-        opt1 = request.form.get('opt1')
-        opt2 = request.form.get('opt2')
-        opt3 = request.form.get('opt3')
-        correct_choice = request.form.get('correct')
-        final_correct_name = None
-        if correct_choice == "1": final_correct_name = opt1
-        elif correct_choice == "2": final_correct_name = opt2
-        elif correct_choice == "3": final_correct_name = opt3
-
-        hint = request.form.get('hint')
-        sender_name = request.form.get('sender_name')
-        reveal_delay = int(request.form.get('reveal_delay', 0))
-        reveal_date = datetime.utcnow() + timedelta(hours=reveal_delay) if reveal_delay > 0 else None
-        
-        agent = request.headers.get('User-Agent', '')
-        device = "iPhone" if "iPhone" in agent else "Android" if "Android" in agent else "PC"
-
-        if content:
-            new_msg = Message(
-                content=content, user_id=user.id, device_info=device, location_info="Remote",
-                hint=hint, sender_name=sender_name, reveal_time=reveal_date,
-                name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, 
-                correct_name=final_correct_name
-            )
-            db.session.add(new_msg)
-            db.session.commit()
-            flash("Sent! 🚀")
-            return redirect(url_for('send_message', username=username))
-    return render_template('send_msg.html', user=user)
-
-@app.route('/check_answer/<int:msg_id>', methods=['POST'])
+@app.route('/upgrade')
 @login_required
-def check_answer(msg_id):
-    msg = Message.query.get_or_404(msg_id)
-    selected = request.json.get('answer')
-    if msg.is_guessed: return jsonify({"status": "already_guessed"})
-    if selected == msg.correct_name:
-        current_user.points += 1
-        msg.is_guessed = True
-        db.session.commit()
-        return jsonify({"status": "correct", "points": current_user.points})
-    return jsonify({"status": "wrong"})
+def upgrade():
+    return render_template('upgrade.html')
 
 @app.route('/delete/<int:msg_id>', methods=['POST'])
 @login_required
@@ -201,10 +224,11 @@ def utility_processor():
     return dict(format_date=format_date)
 
 with app.app_context():
-
+    # سطر التحديث (امسحه بعد أول رن)
+    # db.drop_all() 
+    db.drop_all()
     db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
