@@ -72,6 +72,11 @@ def login():
         flash('Invalid login details')
     return render_template('auth.html', type='Login')
 
+@app.route('/upgrade')
+@login_required
+def upgrade():
+    return render_template('upgrade.html')
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -155,6 +160,7 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
 
