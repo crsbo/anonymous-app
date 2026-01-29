@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* 1. إعدادات صورة الاستوري */
+    /* 1. Instagram Story Shooting Mode (NGL Style) */
     .view-shooting {
         width: 1080px !important; height: 1920px !important;
         display: flex !important; align-items: center !important; justify-content: center !important;
@@ -15,38 +15,33 @@
     }
     .view-shooting .story-card-wrapper { display: block !important; }
 
-    /* تنسيق العنوان والرسالة */
+    /* Header and Message Styling in Image */
     .story-top-label { padding: 35px !important; font-size: 2rem !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: 4px; }
-    .story-body { background: rgba(0,0,0,0.92) !important; padding: 90px 45px !important; min-height: 450px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
+    .story-body { background: rgba(0,0,0,0.95) !important; padding: 90px 45px !important; min-height: 450px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
     .story-msg { font-size: 2.6rem !important; line-height: 1.4; font-weight: 600; color: #fff !important; margin-bottom: 40px !important; }
 
-    /* ستايل البيانات (الموبايل واللوكيشن) */
+    /* Badges (Device & Location) in Image */
     .story-badges-row { display: flex !important; gap: 18px !important; }
     .story-badge-item { padding: 12px 22px !important; border-radius: 14px !important; font-size: 1.3rem !important; font-weight: bold !important; border: 2px solid; background: rgba(255,255,255,0.08) !important; }
 
-    /* ألوان الثيمات المعدلة */
-    /* 1. ثيم الدارك (المجاني - متظبط) */
+    /* Themes Styling */
     .theme-dark.view-shooting { background: #121212 !important; }
     .theme-dark .story-card-wrapper { border: 7px solid #ffffff !important; }
     .theme-dark .story-top-label { background: #ffffff !important; color: #000000 !important; }
     .theme-dark .story-badge-item { color: #ffffff !important; border-color: #ffffff !important; }
 
-    /* 2. ثيم الجولد (بريميوم) */
     .theme-dark-gold.view-shooting { background: #000 !important; }
     .theme-dark-gold .story-card-wrapper { border: 7px solid #d4af37 !important; }
     .theme-dark-gold .story-top-label { background: #d4af37 !important; color: #000 !important; }
     .theme-dark-gold .story-badge-item { color: #d4af37 !important; border-color: #d4af37 !important; }
 
-    /* 3. ثيم النيون (بريميوم) */
     .theme-neon.view-shooting { background: #050505 !important; }
     .theme-neon .story-card-wrapper { border: 7px solid #39ff14 !important; }
     .theme-neon .story-top-label { background: #39ff14 !important; color: #000 !important; }
     .theme-neon .story-badge-item { color: #39ff14 !important; border-color: #39ff14 !important; }
 
-    /* إخفاء واجهة الموقع وقت التصوير */
+    /* Dashboard UI */
     .view-shooting .dashboard-ui { display: none !important; }
-
-    /* تنسيقات الداشبورد */
     .trash-icon { color: #dc3545; border: none; background: none; transition: 0.2s; }
     .trash-icon:hover { transform: scale(1.2); }
     .theme-opt { cursor: pointer; transition: 0.3s; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; position: relative; }
@@ -79,6 +74,10 @@
                                 {% if current_user.is_premium %}
                                     <span class="badge bg-light text-primary border me-1"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</span>
                                     <span class="badge bg-light text-success border me-2"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}</span>
+                                {% else %}
+                                    <a href="{{ url_for('upgrade') }}" class="text-warning text-decoration-none me-3 small fw-bold">
+                                        <i class="bi bi-lock-fill"></i> Reveal Info
+                                    </a>
                                 {% endif %}
                                 <button class="btn btn-sm btn-dark rounded-pill py-1 px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
                                     <i class="bi bi-instagram me-1"></i> Share
@@ -86,7 +85,7 @@
                             </div>
                         </div>
                         <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
-                            <button type="submit" class="trash-icon" onclick="return confirm('Delete?')"><i class="bi bi-trash3-fill"></i></button>
+                            <button type="submit" class="trash-icon" onclick="return confirm('Delete this message?')"><i class="bi bi-trash3-fill"></i></button>
                         </form>
                     </div>
 
@@ -116,10 +115,10 @@
       <div class="modal-body py-5 bg-light d-flex justify-content-around">
             <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #222; border: 3px solid #fff; color: #fff;">Dark</div>
             
-            <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-dark-gold')"{% else %}onclick="alert('Unlock with Premium! 🏆')"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">
+            <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-dark-gold')"{% else %}onclick="window.location.href='{{ url_for('upgrade') }}'"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">
                 {% if not current_user.is_premium %}<i class="bi bi-lock-fill premium-lock"></i>{% endif %}Gold
             </div>
-            <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-neon')"{% else %}onclick="alert('Unlock with Premium! 🏆')"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #39ff14; color: #39ff14;">
+            <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-neon')"{% else %}onclick="window.location.href='{{ url_for('upgrade') }}'"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #39ff14; color: #39ff14;">
                 {% if not current_user.is_premium %}<i class="bi bi-lock-fill premium-lock"></i>{% endif %}Neon
             </div>
       </div>
