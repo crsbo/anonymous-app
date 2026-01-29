@@ -1,129 +1,101 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* 1. إعدادات صورة الاستوري الكاملة */
+    /* 1. إعدادات صورة الاستوري (الوضع اللي بيتصور) */
     .view-shooting {
-        width: 1080px !important;
-        height: 1920px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        border: none !important;
-        border-radius: 0 !important;
+        width: 1080px !important; height: 1920px !important;
+        display: flex !important; align-items: center !important; justify-content: center !important;
+        border: none !important; border-radius: 0 !important;
     }
 
-    /* كارت الرسالة اللي في النص */
+    /* المربع اللي بيظهر في الصورة بس */
     .story-card-wrapper {
-        width: 85% !important;
-        border-radius: 40px !important;
-        overflow: hidden !important; /* عشان الحواف تبقى ناعمة */
-        display: none; 
+        width: 85% !important; border-radius: 40px !important;
+        overflow: hidden !important; display: none; /* مخفي في العادي */
         box-shadow: 0 30px 60px rgba(0,0,0,0.6) !important;
     }
+    .view-shooting .story-card-wrapper { display: block !important; }
 
-    .view-shooting .story-card-wrapper {
-        display: block !important;
-    }
+    /* ستايل العنوان والرسالة جوه الصورة */
+    .story-top-label { padding: 30px !important; font-size: 1.8rem !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: 3px; }
+    .story-body { background: rgba(0,0,0,0.9) !important; padding: 80px 40px !important; min-height: 400px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
+    .story-msg { font-size: 2.5rem !important; line-height: 1.3; font-weight: 600; color: #fff !important; margin-bottom: 40px !important; }
 
-    /* الـ Header اللي فوق (واخد لون الثيم) */
-    .story-top-label {
-        padding: 30px !important;
-        font-size: 1.8rem !important;
-        font-weight: 900 !important;
-        text-transform: uppercase;
-        letter-spacing: 3px;
-    }
+    /* ستايل البيانات (الموبايل واللوكيشن) جوه الصورة */
+    .story-badges-row { display: flex !important; gap: 15px !important; }
+    .story-badge-item { padding: 10px 20px !important; border-radius: 12px !important; font-size: 1.2rem !important; font-weight: bold !important; border: 2px solid; background: rgba(255,255,255,0.05) !important; }
 
-    /* جسم الرسالة (الخلفية الغامقة) */
-    .story-body {
-        background: rgba(0,0,0,0.85) !important;
-        padding: 80px 40px !important;
-        min-height: 300px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .story-msg {
-        font-size: 2.5rem !important;
-        line-height: 1.3;
-        font-weight: 600;
-        color: #fff !important; /* النص دايمًا أبيض أو فاتح عشان يظهر */
-    }
-
-    /* تخصيص ألوان الثيمات */
-    /* جولد */
+    /* ألوان الثيمات */
     .theme-dark-gold.view-shooting { background: #000 !important; }
     .theme-dark-gold .story-card-wrapper { border: 6px solid #d4af37 !important; }
     .theme-dark-gold .story-top-label { background: #d4af37 !important; color: #000 !important; }
-    .theme-dark-gold .story-msg { color: #f1e5ac !important; }
+    .theme-dark-gold .story-badge-item { color: #d4af37 !important; border-color: #d4af37 !important; }
 
-    /* نيون */
     .theme-neon.view-shooting { background: #050505 !important; }
     .theme-neon .story-card-wrapper { border: 6px solid #39ff14 !important; }
     .theme-neon .story-top-label { background: #39ff14 !important; color: #000 !important; }
-    .theme-neon .story-msg { color: #39ff14 !important; text-shadow: 0 0 10px #39ff14; }
+    .theme-neon .story-badge-item { color: #39ff14 !important; border-color: #39ff14 !important; }
 
-    /* دارك */
-    .theme-dark.view-shooting { background: #1a1a1a !important; }
-    .theme-dark .story-card-wrapper { border: 6px solid #fff !important; }
-    .theme-dark .story-top-label { background: #fff !important; color: #000 !important; }
-    .theme-dark .story-msg { color: #fff !important; }
+    /* إخفاء محتوى الداشبورد وقت التصوير */
+    .view-shooting .dashboard-ui { display: none !important; }
 
-    /* إخفاء عناصر الداشبورد */
-    .view-shooting .dashboard-content, .view-shooting .delete-form, .view-shooting .premium-info, .view-shooting small {
-        display: none !important;
-    }
-
-    .trash-icon { color: #dc3545; border: none; background: none; padding: 5px; }
+    /* تنسيقات الداشبورد العادية */
+    .trash-icon { color: #dc3545; border: none; background: none; }
     .theme-opt { cursor: pointer; transition: 0.2s; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     .theme-opt:hover { transform: scale(1.1); }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
-        <div class="card shadow-sm p-4 mb-4 border-0" style="border-radius: 20px;">
+        <div class="card shadow-sm p-4 mb-4 border-0 dashboard-ui" style="border-radius: 20px;">
             <h3 class="fw-bold">Welcome, {{ current_user.username }}!</h3>
             <div class="input-group mb-3 mt-3">
                 <input type="text" id="myLink" class="form-control text-center bg-light border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
                 <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy</button>
             </div>
-            <div class="badge bg-primary p-2 px-4 rounded-pill d-inline-block">Inbox: {{ count }} Messages</div>
+            <div class="badge bg-primary p-2 px-4 rounded-pill">Inbox: {{ count }} Messages</div>
         </div>
 
-        <h5 class="text-start mb-3 fw-bold">My Messages</h5>
+        <h5 class="text-start mb-3 fw-bold dashboard-ui">My Messages</h5>
         <div class="row">
             {% for msg in messages %}
             <div class="col-12 mb-3">
-                <div id="msg-card-{{ msg.id }}" class="card shadow-sm p-0 text-start position-relative border-0" style="border-radius: 20px; background: white; overflow: hidden;">
+                <div id="msg-card-{{ msg.id }}" class="card shadow-sm text-start position-relative border-0" style="border-radius: 20px; background: white; overflow: hidden;">
                     
-                    <div class="dashboard-content p-4">
+                    <div class="dashboard-ui p-4">
                         <p class="mb-3 fs-5 fw-medium text-dark">{{ msg.content }}</p>
+                        <div class="d-flex align-items-center justify-content-between mt-2">
+                            <small class="text-muted"><i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}</small>
+                            <div class="premium-info d-flex align-items-center">
+                                {% if current_user.is_premium %}
+                                    <span class="badge bg-light text-primary border me-1"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</span>
+                                    <span class="badge bg-light text-success border me-2"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}</span>
+                                    <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
+                                        <i class="bi bi-instagram me-1"></i> Share
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked Details</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
+                            <button type="submit" class="trash-icon" onclick="return confirm('Delete?')"><i class="bi bi-trash3-fill"></i></button>
+                        </form>
                     </div>
 
                     <div class="story-card-wrapper">
                         <div class="story-top-label text-center">ANONYMOUS MESSAGES</div>
                         <div class="story-body text-center">
                             <div class="story-msg">{{ msg.content }}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="dashboard-content p-4 pt-0 d-flex align-items-center justify-content-between">
-                        <small class="text-muted"><i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}</small>
-                        <div class="premium-info d-flex align-items-center">
                             {% if current_user.is_premium %}
-                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
-                                    <i class="bi bi-instagram me-1"></i> Share
-                                </button>
-                            {% else %}
-                                <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
+                            <div class="story-badges-row">
+                                <div class="story-badge-item"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</div>
+                                <div class="story-badge-item"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}</div>
+                            </div>
                             {% endif %}
                         </div>
                     </div>
 
-                    <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="delete-form position-absolute top-0 end-0 m-2">
-                        <button type="submit" class="trash-icon"><i class="bi bi-trash3-fill"></i></button>
-                    </form>
                 </div>
             </div>
             {% endfor %}
@@ -156,7 +128,7 @@ function downloadStory(themeClass) {
     const originalClass = card.className;
     card.classList.add(themeClass); card.classList.add('view-shooting');
     html2canvas(card, { width: 1080, height: 1920, scale: 2, backgroundColor: null, useCORS: true }).then(canvas => {
-        const link = document.createElement('a'); link.download = `Anonymous_Story.png`; link.href = canvas.toDataURL("image/png"); link.click();
+        const link = document.createElement('a'); link.download = `Story.png`; link.href = canvas.toDataURL("image/png"); link.click();
         card.className = originalClass;
         bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
     });
