@@ -1,67 +1,80 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* 1. تنسيق "وضع التصوير" ليكون مثل NGL */
+    /* 1. إعدادات صورة الاستوري الكاملة */
     .view-shooting {
-        width: 1080px !important;  /* عرض ثابت للستوري */
-        height: 1920px !important; /* طول ثابت للستوري */
+        width: 1080px !important;
+        height: 1920px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 0 !important;
-        margin: 0 !important;
         border: none !important;
         border-radius: 0 !important;
     }
 
-    /* المربع اللي جوه الصورة */
+    /* كارت الرسالة اللي في النص */
     .story-card-wrapper {
         width: 85% !important;
-        padding: 60px 40px !important;
-        border-radius: 50px !important;
-        text-align: center !important;
-        display: none; /* مخفي في الداشبورد */
+        border-radius: 40px !important;
+        overflow: hidden !important; /* عشان الحواف تبقى ناعمة */
+        display: none; 
+        box-shadow: 0 30px 60px rgba(0,0,0,0.6) !important;
     }
 
     .view-shooting .story-card-wrapper {
-        display: block !important; /* بيظهر بس وقت التصوير */
+        display: block !important;
     }
 
-    /* العنوان العريض */
-    .story-title {
-        font-size: 2.8rem !important;
+    /* الـ Header اللي فوق (واخد لون الثيم) */
+    .story-top-label {
+        padding: 30px !important;
+        font-size: 1.8rem !important;
         font-weight: 900 !important;
         text-transform: uppercase;
-        margin-bottom: 40px !important;
-        letter-spacing: 2px;
+        letter-spacing: 3px;
     }
 
-    /* نص الرسالة في نص الصورة */
+    /* جسم الرسالة (الخلفية الغامقة) */
+    .story-body {
+        background: rgba(0,0,0,0.85) !important;
+        padding: 80px 40px !important;
+        min-height: 300px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
     .story-msg {
-        font-size: 2.2rem !important;
-        line-height: 1.4;
+        font-size: 2.5rem !important;
+        line-height: 1.3;
         font-weight: 600;
+        color: #fff !important; /* النص دايمًا أبيض أو فاتح عشان يظهر */
     }
 
-    /* ألوان الثيمات وقت التصوير (خلفية الشاشة + المربع) */
+    /* تخصيص ألوان الثيمات */
+    /* جولد */
     .theme-dark-gold.view-shooting { background: #000 !important; }
-    .theme-dark-gold .story-card-wrapper { background: #1a1a1a !important; border: 8px solid #d4af37 !important; color: #d4af37 !important; }
-    
+    .theme-dark-gold .story-card-wrapper { border: 6px solid #d4af37 !important; }
+    .theme-dark-gold .story-top-label { background: #d4af37 !important; color: #000 !important; }
+    .theme-dark-gold .story-msg { color: #f1e5ac !important; }
+
+    /* نيون */
     .theme-neon.view-shooting { background: #050505 !important; }
-    .theme-neon .story-card-wrapper { background: #000 !important; border: 8px solid #39ff14 !important; color: #39ff14 !important; }
+    .theme-neon .story-card-wrapper { border: 6px solid #39ff14 !important; }
+    .theme-neon .story-top-label { background: #39ff14 !important; color: #000 !important; }
+    .theme-neon .story-msg { color: #39ff14 !important; text-shadow: 0 0 10px #39ff14; }
 
+    /* دارك */
     .theme-dark.view-shooting { background: #1a1a1a !important; }
-    .theme-dark .story-card-wrapper { background: #222 !important; border: 8px solid #fff !important; color: #fff !important; }
+    .theme-dark .story-card-wrapper { border: 6px solid #fff !important; }
+    .theme-dark .story-top-label { background: #fff !important; color: #000 !important; }
+    .theme-dark .story-msg { color: #fff !important; }
 
-    /* إخفاء كل عناصر الداشبورد وقت التصوير */
-    .view-shooting .dashboard-content, 
-    .view-shooting .delete-form,
-    .view-shooting .premium-info,
-    .view-shooting small {
+    /* إخفاء عناصر الداشبورد */
+    .view-shooting .dashboard-content, .view-shooting .delete-form, .view-shooting .premium-info, .view-shooting small {
         display: none !important;
     }
 
-    /* تنسيق الداشبورد العادي */
     .trash-icon { color: #dc3545; border: none; background: none; padding: 5px; }
     .theme-opt { cursor: pointer; transition: 0.2s; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     .theme-opt:hover { transform: scale(1.1); }
@@ -82,47 +95,34 @@
         <div class="row">
             {% for msg in messages %}
             <div class="col-12 mb-3">
-                <div id="msg-card-{{ msg.id }}" class="card shadow-sm p-4 text-start position-relative border-0" style="border-radius: 15px; background: white;">
+                <div id="msg-card-{{ msg.id }}" class="card shadow-sm p-0 text-start position-relative border-0" style="border-radius: 20px; background: white; overflow: hidden;">
                     
-                    <div class="dashboard-content">
+                    <div class="dashboard-content p-4">
                         <p class="mb-3 fs-5 fw-medium text-dark">{{ msg.content }}</p>
                     </div>
 
                     <div class="story-card-wrapper">
-                        <div class="story-title">ANONYMOUS</div>
-                        <div class="story-msg">{{ msg.content }}</div>
+                        <div class="story-top-label text-center">ANONYMOUS MESSAGES</div>
+                        <div class="story-body text-center">
+                            <div class="story-msg">{{ msg.content }}</div>
+                        </div>
                     </div>
                     
-                    <div class="d-flex align-items-center justify-content-between mt-2">
-                        <small class="text-muted" style="font-size: 0.75rem;">
-                            <i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}
-                        </small>
-
+                    <div class="dashboard-content p-4 pt-0 d-flex align-items-center justify-content-between">
+                        <small class="text-muted"><i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}</small>
                         <div class="premium-info d-flex align-items-center">
                             {% if current_user.is_premium %}
-                                <span class="badge bg-light text-primary border me-1" style="font-size: 0.65rem;">
-                                    <i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}
-                                </span>
-                                <span class="badge bg-light text-success border me-2" style="font-size: 0.65rem;">
-                                    <i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}
-                                </span>
-                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 fw-bold" 
-                                        style="font-size: 0.7rem;"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#themeModal" 
-                                        onclick="activeMsgId = '{{ msg.id }}'">
+                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
                                     <i class="bi bi-instagram me-1"></i> Share
                                 </button>
                             {% else %}
-                                <span class="text-muted" style="font-size: 0.65rem;"><i class="bi bi-lock-fill"></i> Locked</span>
+                                <span class="text-muted small"><i class="bi bi-lock-fill"></i> Locked</span>
                             {% endif %}
                         </div>
                     </div>
 
                     <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="delete-form position-absolute top-0 end-0 m-2">
-                        <button type="submit" class="trash-icon" onclick="return confirm('Delete?')">
-                            <i class="bi bi-trash3-fill" style="font-size: 1.2rem;"></i>
-                        </button>
+                        <button type="submit" class="trash-icon"><i class="bi bi-trash3-fill"></i></button>
                     </form>
                 </div>
             </div>
@@ -134,9 +134,7 @@
 <div class="modal fade" id="themeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-      <div class="modal-header bg-dark text-white border-0 text-center">
-        <h5 class="modal-title fw-bold w-100">Choose Story Style 🎨</h5>
-      </div>
+      <div class="modal-header bg-dark text-white border-0 text-center"><h5 class="modal-title fw-bold w-100">Choose Style 🎨</h5></div>
       <div class="modal-body py-5 bg-light d-flex justify-content-around">
             <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 85px; height: 85px; background: #000; border: 3px solid #d4af37; color: #d4af37;">Gold</div>
             <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 85px; height: 85px; background: #000; border: 3px solid #39ff14; color: #39ff14;">Neon</div>
@@ -149,37 +147,18 @@
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script>
 let activeMsgId = null;
-
 function copyLink() {
-    var copyText = document.getElementById("myLink");
-    copyText.select();
-    document.execCommand("copy");
-    alert("Link Copied! 🚀");
+    var copyText = document.getElementById("myLink"); copyText.select(); document.execCommand("copy"); alert("Link Copied! 🚀");
 }
-
 function downloadStory(themeClass) {
     if (!activeMsgId) return;
     const card = document.getElementById('msg-card-' + activeMsgId);
     const originalClass = card.className;
-
-    card.classList.add(themeClass);
-    card.classList.add('view-shooting');
-
-    html2canvas(card, { 
-        width: 1080,
-        height: 1920,
-        scale: 2, // جودة كافية جداً وسريعة
-        backgroundColor: null, 
-        useCORS: true 
-    }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `Anonymous_Story.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-
+    card.classList.add(themeClass); card.classList.add('view-shooting');
+    html2canvas(card, { width: 1080, height: 1920, scale: 2, backgroundColor: null, useCORS: true }).then(canvas => {
+        const link = document.createElement('a'); link.download = `Anonymous_Story.png`; link.href = canvas.toDataURL("image/png"); link.click();
         card.className = originalClass;
-        const modal = bootstrap.Modal.getInstance(document.getElementById('themeModal'));
-        if (modal) modal.hide();
+        bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
     });
 }
 </script>
