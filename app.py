@@ -10,9 +10,9 @@ app = Flask(__name__)
 # --- إعدادات الأمان وقاعدة البيانات ---
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 
-# التعديل المهم: بيقرأ من DATABASE_URL لو موجود (على ريندر) وإلا بيشغل SQLite (عندك ع الجهاز)
+# التعديل الذهبي للربط بالداتابيز في ريلواي
 uri = os.environ.get('DATABASE_URL', 'sqlite:///anonymous_app.db')
-if uri.startswith("postgres://"):
+if uri and uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -38,8 +38,7 @@ class Message(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- Routes (المسارات) ---
-
+# --- المسارات (Routes) ---
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -49,7 +48,7 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username').lower().strip()
+        username = request.form.get('username', '').lower().strip()
         password = request.form.get('password')
         if User.query.filter_by(username=username).first():
             flash('Username already exists!')
@@ -66,7 +65,7 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username').lower().strip()
+        username = request.form.get('username', '').lower().strip()
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
@@ -110,7 +109,10 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+# التعديل القاتل للاخطاء: تشغيل البورت تلقائياً في ريلواي
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
+
