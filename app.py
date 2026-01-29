@@ -27,20 +27,18 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     is_premium = db.Column(db.Boolean, default=False)
-    points = db.Column(db.Integer, default=0) # نظام النقاط
-    free_reveals = db.Column(db.Integer, default=0) # عدد مرات الكشف المتاحة
+    points = db.Column(db.Integer, default=0)
+    free_reveals = db.Column(db.Integer, default=0)
     messages = db.relationship('Message', backref='receiver', lazy=True)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    # Game Fields
     name_opt_1 = db.Column(db.String(50))
     name_opt_2 = db.Column(db.String(50))
     name_opt_3 = db.Column(db.String(50))
     correct_name = db.Column(db.String(50))
     is_guessed = db.Column(db.Boolean, default=False)
-    
     hint = db.Column(db.String(100))
     sender_name = db.Column(db.String(100))
     reveal_time = db.Column(db.DateTime)
@@ -55,6 +53,37 @@ def load_user(user_id):
 
 # --- Routes ---
 
+@app.route('/')
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('register'))
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username', '').lower().strip()
+        password = request.form.get('password')
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists!')
+            return redirect(url_for('register'))
+        new_user = User(username=username, password=generate_password_hash(password))
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect(url_for('login'))
+    return render_template('auth.html', type='Register')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').lower().strip()
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password, request.form.get('password')):
+            login_user(user)
+            return redirect(url_for('dashboard'))
+        flash('Invalid login details')
+    return render_template('auth.html', type='Login')
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -66,17 +95,16 @@ def send_message(username):
     user = User.query.filter_by(username=username).first_or_404()
     if request.method == 'POST':
         content = request.form.get('content')
-        # Game Inputs
         opt1 = request.form.get('opt1')
         opt2 = request.form.get('opt2')
         opt3 = request.form.get('opt3')
-        correct = request.form.get('correct') # بياخد القيمة من الـ Radio button
-        
+        correct = request.form.get('correct')
         hint = request.form.get('hint')
         sender_name = request.form.get('sender_name')
         reveal_delay = int(request.form.get('reveal_delay', 0))
 
         reveal_date = datetime.utcnow() + timedelta(hours=reveal_delay) if reveal_delay > 0 else None
+        
         agent = request.headers.get('User-Agent', '')
         device = "iPhone" if "iPhone" in agent else "Android" if "Android" in agent else "PC"
 
@@ -87,48 +115,66 @@ def send_message(username):
         )
         db.session.add(new_msg)
         db.session.commit()
-        return "<h1>Sent!</h1>"
+        return "<h1>Sent Successfully!</h1><a href='/'>Back</a>"
     return render_template('send_msg.html', user=user)
 
-# Route للتحقق من الإجابة وزيادة النقاط
 @app.route('/check_answer/<int:msg_id>', methods=['POST'])
 @login_required
 def check_answer(msg_id):
     msg = Message.query.get_or_404(msg_id)
     selected = request.json.get('answer')
-    
     if msg.is_guessed:
         return jsonify({"status": "already_guessed", "message": "Already answered!"})
-
     if selected == msg.correct_name:
         current_user.points += 1
         msg.is_guessed = True
         db.session.commit()
         return jsonify({"status": "correct", "points": current_user.points})
-    else:
-        return jsonify({"status": "wrong"})
+    return jsonify({"status": "wrong"})
+
+@app.route('/upgrade')
+@login_required
+def upgrade():
+    return render_template('upgrade.html')
 
 @app.route('/be-pro')
 @login_required
 def be_pro():
     current_user.is_premium = True
-    current_user.free_reveals = 5 # بنسلفه 5 مرات كشف كهدية
+    current_user.free_reveals = 5
     db.session.commit()
+    flash("Premium activated! 🚀")
     return redirect(url_for('dashboard'))
 
-# ... باقي الـ Routes (Login, Logout, etc.) ...
+@app.route('/delete/<int:msg_id>', methods=['POST'])
+@login_required
+def delete_message(msg_id):
+    msg = Message.query.get_or_404(msg_id)
+    if msg.user_id == current_user.id:
+        db.session.delete(msg)
+        db.session.commit()
+    return redirect(url_for('dashboard'))
 
-# تشغيل السيرفر وبناء الجداول
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+@app.context_processor
+def utility_processor():
+    def format_date(date):
+        return arrow.get(date).humanize()
+    return dict(format_date=format_date)
+
 with app.app_context():
     try:
-        # بنمسح الجداول لمرة واحدة عشان التحديثات الجديدة (النقاط ولعبة الأسامي)
+        # شيل السطرين دول بعد أول تشغيل ناجح
         db.drop_all() 
         db.create_all()
-        print("Database Rebuilt with Points & Guess Game!")
+        print("Database Rebuilt successfully!")
     except Exception as e:
         print(f"Error: {e}")
 
 if __name__ == '__main__':
-    # السطرين دول هما اللي بيخلوا ريلواي يفتح الموقع صح
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
