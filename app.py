@@ -23,7 +23,6 @@ login_manager.login_view = 'login'
 
 # --- Models ---
 
-# جدول الصداقة (علاقة بسيطة)
 class Friendship(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -38,13 +37,11 @@ class User(UserMixin, db.Model):
     free_reveals = db.Column(db.Integer, default=0)
     messages = db.relationship('Message', backref='receiver', lazy=True)
 
-    # وظيفة لجلب أيديوهات الصحاب
     def get_friend_ids(self):
-        # البحث عن الصداقات اللي المستخدم طرف فيها
         f1 = Friendship.query.filter_by(user_id=self.id).all()
         f2 = Friendship.query.filter_by(friend_id=self.id).all()
         ids = [f.friend_id for f in f1] + [f.user_id for f in f2]
-        return list(set(ids)) # حذف التكرار
+        return list(set(ids))
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,48 +64,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # --- Routes ---
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    messages = Message.query.filter_by(user_id=current_user.id).order_by(Message.timestamp.desc()).all()
-    
-    # 1. الترتيب العالمي (Top 5)
-    global_top = User.query.order_by(User.points.desc()).limit(5).all()
-    
-    # 2. ترتيب الصحاب (Friends Leaderboard)
-    friend_ids = current_user.get_friend_ids()
-    friend_ids.append(current_user.id) # ضيف نفسك للمنافسة
-    friends_top = User.query.filter(User.id.in_(friend_ids)).order_by(User.points.desc()).all()
-    
-    return render_template('dashboard.html', 
-                           messages=messages, 
-                           count=len(messages), 
-                           global_top=global_top, 
-                           friends_top=friends_top,
-                           now=datetime.utcnow())
-
-@app.route('/add_friend/<int:friend_id>', methods=['POST'])
-@login_required
-def add_friend(friend_id):
-    if friend_id == current_user.id:
-        return redirect(url_for('dashboard'))
-    
-    # التأكد إنهم مش صحاب أصلاً
-    exists = Friendship.query.filter(
-        ((Friendship.user_id == current_user.id) & (Friendship.friend_id == friend_id)) |
-        ((Friendship.user_id == friend_id) & (Friendship.friend_id == current_user.id))
-    ).first()
-    
-    if not exists:
-        new_f = Friendship(user_id=current_user.id, friend_id=friend_id)
-        db.session.add(new_f)
-        db.session.commit()
-        flash("Friend added! Now you can compete in Leaderboard. 🤝")
-    
-    return redirect(url_for('dashboard'))
-
-# ... (باقي الـ Routes زي ما هي: Login, Register, Send Message, etc.) ...
 
 @app.route('/')
 def index():
@@ -140,6 +95,42 @@ def login():
             return redirect(url_for('dashboard'))
         flash('Invalid login details')
     return render_template('auth.html', type='Login')
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    messages = Message.query.filter_by(user_id=current_user.id).order_by(Message.timestamp.desc()).all()
+    global_top = User.query.order_by(User.points.desc()).limit(5).all()
+    friend_ids = current_user.get_friend_ids()
+    friend_ids.append(current_user.id)
+    friends_top = User.query.filter(User.id.in_(friend_ids)).order_by(User.points.desc()).all()
+    return render_template('dashboard.html', 
+                           messages=messages, 
+                           count=len(messages), 
+                           global_top=global_top, 
+                           friends_top=friends_top,
+                           now=datetime.utcnow())
+
+@app.route('/upgrade')
+@login_required
+def upgrade():
+    return render_template('upgrade.html')
+
+@app.route('/add_friend/<int:friend_id>', methods=['POST'])
+@login_required
+def add_friend(friend_id):
+    if friend_id == current_user.id:
+        return redirect(url_for('dashboard'))
+    exists = Friendship.query.filter(
+        ((Friendship.user_id == current_user.id) & (Friendship.friend_id == friend_id)) |
+        ((Friendship.user_id == friend_id) & (Friendship.friend_id == current_user.id))
+    ).first()
+    if not exists:
+        new_f = Friendship(user_id=current_user.id, friend_id=friend_id)
+        db.session.add(new_f)
+        db.session.commit()
+        flash("Friend added! 🤝")
+    return redirect(url_for('dashboard'))
 
 @app.route('/user/<username>', methods=['GET', 'POST'])
 def send_message(username):
@@ -174,7 +165,6 @@ def send_message(username):
             db.session.commit()
             flash("Sent! 🚀")
             return redirect(url_for('send_message', username=username))
-            
     return render_template('send_msg.html', user=user)
 
 @app.route('/check_answer/<int:msg_id>', methods=['POST'])
@@ -190,6 +180,15 @@ def check_answer(msg_id):
         return jsonify({"status": "correct", "points": current_user.points})
     return jsonify({"status": "wrong"})
 
+@app.route('/delete/<int:msg_id>', methods=['POST'])
+@login_required
+def delete_message(msg_id):
+    msg = Message.query.get_or_404(msg_id)
+    if msg.user_id == current_user.id:
+        db.session.delete(msg)
+        db.session.commit()
+    return redirect(url_for('dashboard'))
+
 @app.route('/logout')
 def logout():
     logout_user()
@@ -202,6 +201,7 @@ def utility_processor():
     return dict(format_date=format_date)
 
 with app.app_context():
+    db.drop_all()
     db.create_all()
 
 if __name__ == '__main__':
