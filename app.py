@@ -95,14 +95,22 @@ def send_message(username):
     user = User.query.filter_by(username=username).first_or_404()
     if request.method == 'POST':
         content = request.form.get('content')
+        
+        # استلام الأسماء الـ 3
         opt1 = request.form.get('opt1')
         opt2 = request.form.get('opt2')
         opt3 = request.form.get('opt3')
-        correct = request.form.get('correct')
+        
+        # المنطق الجديد: تحديد مين الاسم الصح بناءً على اختيار المرسل
+        correct_choice = request.form.get('correct')
+        final_correct_name = None
+        if correct_choice == "1": final_correct_name = opt1
+        elif correct_choice == "2": final_correct_name = opt2
+        elif correct_choice == "3": final_correct_name = opt3
+
         hint = request.form.get('hint')
         sender_name = request.form.get('sender_name')
         reveal_delay = int(request.form.get('reveal_delay', 0))
-
         reveal_date = datetime.utcnow() + timedelta(hours=reveal_delay) if reveal_delay > 0 else None
         
         agent = request.headers.get('User-Agent', '')
@@ -111,7 +119,8 @@ def send_message(username):
         new_msg = Message(
             content=content, user_id=user.id, device_info=device, location_info="Remote",
             hint=hint, sender_name=sender_name, reveal_time=reveal_date,
-            name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, correct_name=correct
+            name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, 
+            correct_name=final_correct_name # بنسجل الاسم الحقيقي كإجابة صحيحة
         )
         db.session.add(new_msg)
         db.session.commit()
@@ -125,6 +134,8 @@ def check_answer(msg_id):
     selected = request.json.get('answer')
     if msg.is_guessed:
         return jsonify({"status": "already_guessed", "message": "Already answered!"})
+    
+    # مقارنة الاسم اللي المستلم اختاره بالاسم الصح اللي المرسل حدده
     if selected == msg.correct_name:
         current_user.points += 1
         msg.is_guessed = True
@@ -168,10 +179,10 @@ def utility_processor():
 
 with app.app_context():
     try:
-        # شيل السطرين دول بعد أول تشغيل ناجح
+        # شيل drop_all بعد أول تجربة عشان الداتابيز تثبت
         db.drop_all() 
         db.create_all()
-        print("Database Rebuilt successfully!")
+        print("Database Rebuilt with Guessing Game Logic!")
     except Exception as e:
         print(f"Error: {e}")
 
