@@ -1,6 +1,5 @@
-flask
-flask-sqlalchemy
-flask-login
-gunicorn
+Flask
+Flask-SQLAlchemy
+Flask-Login
 psycopg2-binary
-eventlet
+gunicorn
