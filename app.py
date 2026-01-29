@@ -32,6 +32,10 @@ class User(UserMixin, db.Model):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
+    # الخانات الجديدة
+    hint = db.Column(db.String(100)) # التلميح
+    sender_name = db.Column(db.String(100)) # الاسم الحقيقي اللي هيتكشف
+    reveal_time = db.Column(db.DateTime) # وقت كشف الاسم
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     device_info = db.Column(db.String(100)) # لتخزين نوع الجهاز
     location_info = db.Column(db.String(100))
@@ -160,6 +164,7 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
 
