@@ -10,9 +10,9 @@ app = Flask(__name__)
 # --- إعدادات الأمان وقاعدة البيانات ---
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 
-# التعديل المهم: بيقرأ من DATABASE_URL لو موجود (على ريندر) وإلا بيشغل SQLite (عندك ع الجهاز)
+# التعديل لربط PostgreSQL في ريلواي لضمان عدم مسح البيانات
 uri = os.environ.get('DATABASE_URL', 'sqlite:///anonymous_app.db')
-if uri.startswith("postgres://"):
+if uri and uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -21,24 +21,28 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- Models (الجداول) ---
+# --- Models (الجداول بعد التحديث) ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    messages = db.relationship('Message', backref='receiver', lazy=True)
+    is_premium = db.Column(db.Boolean, default=False) # ميزة البريميوم
+    
+    # ربط الرسايل (المرسلة والمستقبلة)
+    received_messages = db.relationship('Message', foreign_keys='Message.user_id', backref='receiver_user', lazy=True)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # المستلم
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # الراسل (مخفي)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- Routes (المسارات) ---
+# --- المسارات (Routes) ---
 
 @app.route('/')
 def index():
@@ -78,9 +82,10 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # جلب رسايل اليوزر الحالي
     messages = Message.query.filter_by(user_id=current_user.id).order_by(Message.timestamp.desc()).all()
-    count = len(messages)
-    return render_template('dashboard.html', messages=messages, count=count)
+    # نحتاج نمرر موديل الـ User للـ template عشان نعرض اسم الراسل للبريميوم
+    return render_template('dashboard.html', messages=messages, count=len(messages), User=User)
 
 @app.route('/user/<username>', methods=['GET', 'POST'])
 def send_message(username):
@@ -88,11 +93,33 @@ def send_message(username):
     if request.method == 'POST':
         msg_content = request.form.get('content')
         if msg_content:
-            new_msg = Message(content=msg_content, user_id=user.id)
+            # لو اللي بيبعت مسجل دخول، بنسجل الـ id بتاعه في صمت
+            s_id = current_user.id if current_user.is_authenticated else None
+            new_msg = Message(content=msg_content, user_id=user.id, sender_id=s_id)
             db.session.add(new_msg)
             db.session.commit()
             return "<h1>Message Sent!</h1><a href='/'>Go to App</a>"
     return render_template('send_msg.html', user=user)
+
+# مسار الرد المجهول (Reply)
+@app.route('/reply/<int:msg_id>', methods=['GET', 'POST'])
+@login_required
+def reply(msg_id):
+    original_msg = Message.query.get_or_404(msg_id)
+    if original_msg.user_id != current_user.id or not original_msg.sender_id:
+        flash("You cannot reply to this message.")
+        return redirect(url_for('dashboard'))
+    
+    recipient = User.query.get(original_msg.sender_id)
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if content:
+            new_reply = Message(content=content, user_id=recipient.id, sender_id=current_user.id)
+            db.session.add(new_reply)
+            db.session.commit()
+            flash('Your anonymous reply has been sent!')
+            return redirect(url_for('dashboard'))
+    return render_template('send_msg.html', user=recipient, is_reply=True)
 
 @app.route('/delete/<int:msg_id>', methods=['POST'])
 @login_required
@@ -113,4 +140,6 @@ def logout():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    # تعديل مهم لريلواي: استخدام البورت من الـ Environment
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
