@@ -4,6 +4,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+import arrow
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
@@ -99,7 +100,13 @@ def delete_message(msg_id):
 def logout():
     logout_user()
     return redirect(url_for('login'))
-
+    
+@app.context_processor
+def utility_processor():
+    def format_date(date):
+        # دي بتحول الوقت لشكل "منذ..." باللغة العربية أو الإنجليزية
+        return arrow.get(date).humanize(locale='ar') # لو عايزها إنجليزي شيل locale='ar'
+    return dict(format_date=format_date)
 # --- الجزء التاني (ده لازم يكون آآآآخر سطرين في الملف خالص) ---
 # --- ده الجزء الأخير في app.py ---
 
@@ -110,3 +117,4 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
