@@ -1,126 +1,93 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* 1. تنسيقات الثيمات وقت التصوير (الستوري) */
+    /* 1. الثيمات وقت التصوير */
     .theme-dark-gold, .theme-neon, .theme-dark {
-        padding: 80px 40px !important;
+        padding: 60px 40px !important;
         border-radius: 30px !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
         align-items: center !important;
-        min-height: 450px !important;
+        min-height: 400px !important;
         text-align: center !important;
     }
+    .theme-dark-gold { background: linear-gradient(145deg, #0a0a0a, #1a1a1a) !important; border: 5px solid #d4af37 !important; color: #d4af37 !important; }
+    .theme-dark-gold p { color: #f1e5ac !important; font-size: 2rem !important; }
+    
+    .theme-neon { background: #000 !important; border: 5px solid #39ff14 !important; color: #39ff14 !important; }
+    .theme-neon p { color: #39ff14 !important; font-size: 2rem !important; text-shadow: 0 0 10px #39ff14; }
 
-    /* الثيم الذهبي الملكي */
-    .theme-dark-gold {
-        background: linear-gradient(145deg, #0a0a0a, #1a1a1a) !important;
-        border: 6px solid #d4af37 !important;
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.3) !important;
-    }
-    .theme-dark-gold p { 
-        color: #d4af37 !important; 
-        font-size: 2.2rem !important; 
-        font-weight: bold !important; 
-        margin: 0 !important;
-    }
+    .theme-dark { background: #111 !important; border: 5px solid #fff !important; color: #fff !important; }
+    .theme-dark p { color: #fff !important; font-size: 2rem !important; }
 
-    /* ثيم النيون الفوسفوري */
-    .theme-neon {
-        background: #000 !important;
-        border: 6px solid #39ff14 !important;
-        box-shadow: 0 0 30px rgba(57, 255, 20, 0.3) !important;
-    }
-    .theme-neon p { 
-        color: #39ff14 !important; 
-        font-size: 2.2rem !important; 
-        text-shadow: 0 0 15px #39ff14 !important;
-        margin: 0 !important;
-    }
-
-    /* ثيم الدارك الكلاسيك */
-    .theme-dark {
-        background: #111 !important;
-        border: 6px solid #ffffff !important;
-        color: #fff !important;
-    }
-    .theme-dark p { color: #fff !important; font-size: 2.2rem !important; margin: 0 !important; }
-
-    /* 2. كود سحري لإخفاء الزوائد وقت التصوير فقط */
+    /* إخفاء الزوائد وقت التصوير */
     .view-shooting .premium-info, 
     .view-shooting small, 
-    .view-shooting form,
+    .view-shooting .delete-form,
     .view-shooting .btn-share-trigger {
         display: none !important;
     }
 
-    /* 3. ستايل مربعات الاختيار في المودال */
-    .theme-opt {
-        cursor: pointer;
-        transition: transform 0.2s;
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
+    /* ستايل المربعات في المودال */
+    .theme-opt { cursor: pointer; transition: 0.2s; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     .theme-opt:hover { transform: scale(1.1); }
+    
+    /* أيقونة المسح */
+    .trash-icon { color: #dc3545; cursor: pointer; border: none; background: none; padding: 5px; }
 </style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
-        <div class="card shadow-sm p-4 mb-4 border-0" style="border-radius: 20px;">
-            <h3 class="fw-bold text-dark">Welcome, {{ current_user.username }}!</h3>
-            <p class="text-muted">Copy your link and share it on Instagram/Snapchat</p>
-            <div class="input-group mb-3">
+        <div class="card shadow-sm p-4 mb-4 border-0">
+            <h3 class="fw-bold">Welcome, {{ current_user.username }}!</h3>
+            <div class="input-group mb-3 mt-3">
                 <input type="text" id="myLink" class="form-control text-center bg-light border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
-                <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy</button>
+                <button class="btn btn-primary px-4" onclick="copyLink()">Copy</button>
             </div>
-            <div class="d-inline-block badge bg-primary p-2 px-4 fs-6 rounded-pill shadow-sm">Inbox: {{ count }} Messages</div>
+            <div class="badge bg-primary p-2 px-4 rounded-pill">Inbox: {{ count }} Messages</div>
         </div>
 
         <h5 class="text-start mb-3 fw-bold">My Messages</h5>
         <div class="row">
             {% for msg in messages %}
             <div class="col-12 mb-3">
-                <div id="msg-card-{{ msg.id }}" class="card shadow-sm p-3 text-start position-relative border-0" style="background: #ffffff; border-radius: 15px;">
-                    <p class="mb-2 text-dark fs-5 fw-medium">{{ msg.content }}</p>
+                <div id="msg-card-{{ msg.id }}" class="card shadow-sm p-4 text-start position-relative border-0" style="border-radius: 15px;">
+                    <p class="mb-3 fs-5 fw-medium text-dark">{{ msg.content }}</p>
                     
-                    <div class="d-flex align-items-center justify-content-between mt-2">
+                    <div class="d-flex align-items-center justify-content-between">
                         <small class="text-muted" style="font-size: 0.7rem;">
-                            <i class="bi bi-clock"></i> {{ format_date(msg.timestamp) }}
+                            <i class="bi bi-clock-fill"></i> {{ format_date(msg.timestamp) }}
                         </small>
 
                         <div class="premium-info d-flex align-items-center">
                             {% if current_user.is_premium %}
                                 <span class="badge bg-light text-primary border me-1" style="font-size: 0.65rem;">
-                                    <i class="bi bi-phone"></i> {{ msg.device_info or 'Unknown' }}
+                                    <i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}
                                 </span>
                                 <span class="badge bg-light text-success border me-2" style="font-size: 0.65rem;">
-                                    <i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Global' }}
+                                    <i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}
                                 </span>
-                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 fw-bold btn-share-trigger" style="font-size: 0.7rem;" onclick="openThemeModal('{{ msg.id }}')">
+                                <button class="btn btn-sm btn-dark rounded-pill py-1 px-3 btn-share-trigger" style="font-size: 0.7rem;" onclick="openThemeModal('{{ msg.id }}')">
                                     <i class="bi bi-instagram"></i> Share
                                 </button>
                             {% else %}
-                                <span class="text-muted" style="font-size: 0.65rem;">
-                                    <i class="bi bi-lock-fill"></i> Details Locked
-                                </span>
+                                <span class="text-muted" style="font-size: 0.65rem;"><i class="bi bi-lock-fill"></i> Locked</span>
                             {% endif %}
                         </div>
                     </div>
 
-                    <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
-                        <button type="submit" class="btn btn-link text-danger p-1" onclick="return confirm('Delete this message?')">
-                            <i class="bi bi-trash3-fill"></i>
+                    <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="delete-form position-absolute top-0 end-0 m-2">
+                        <button type="submit" class="trash-icon" onclick="return confirm('Delete?')">
+                            <i class="bi bi-trash3-fill" style="font-size: 1.1rem;"></i>
                         </button>
                     </form>
                 </div>
             </div>
             {% else %}
-            <div class="text-center py-5 text-muted">Your inbox is empty.</div>
+            <p class="text-muted mt-5">No messages yet.</p>
             {% endfor %}
         </div>
     </div>
@@ -128,24 +95,21 @@
 
 <div class="modal fade" id="themeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
-      <div class="modal-header bg-dark text-white border-0" style="border-radius: 25px 25px 0 0;">
-        <h5 class="modal-title fw-bold">Premium Story Styles 🎨</h5>
+    <div class="modal-content border-0">
+      <div class="modal-header bg-dark text-white border-0">
+        <h5 class="modal-title">Choose Style 🎨</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body py-5 bg-light" style="border-radius: 0 0 25px 25px;">
-        <div class="d-flex justify-content-around">
-            <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">Gold</div>
-            <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 90px; height: 90px; background: #000; border: 3px solid #39ff14; color: #39ff14;">Neon</div>
-            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #1a1a1a; border: 3px solid #fff; color: #fff;">Dark</div>
-        </div>
+      <div class="modal-body py-5 bg-light d-flex justify-content-around">
+            <div class="theme-opt" onclick="downloadStory('theme-dark-gold')" style="width: 80px; height: 80px; background: #000; border: 2px solid #d4af37; color: #d4af37;">Gold</div>
+            <div class="theme-opt" onclick="downloadStory('theme-neon')" style="width: 80px; height: 80px; background: #000; border: 2px solid #39ff14; color: #39ff14;">Neon</div>
+            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 80px; height: 80px; background: #1a1a1a; border: 2px solid #fff; color: #fff;">Dark</div>
       </div>
     </div>
   </div>
 </div>
 
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-
 <script>
 let activeMsgId = null;
 
@@ -153,38 +117,35 @@ function copyLink() {
   var copyText = document.getElementById("myLink");
   copyText.select();
   document.execCommand("copy");
-  alert("Link copied! Share it now 🚀");
+  alert("Link Copied!");
 }
 
 function openThemeModal(msgId) {
     activeMsgId = msgId;
-    var myModal = new bootstrap.Modal(document.getElementById('themeModal'));
-    myModal.show();
+    var modalEl = document.getElementById('themeModal');
+    var modal = new bootstrap.Modal(modalEl);
+    modal.show();
 }
 
 function downloadStory(themeClass) {
     const card = document.getElementById('msg-card-' + activeMsgId);
     const originalClass = card.className;
 
-    // 1. تفعيل وضع التصوير والثيم المختار
+    // تفعيل وضع التصوير
     card.classList.add(themeClass);
     card.classList.add('view-shooting');
 
-    // 2. تصوير الكارت بجودة 4K
-    html2canvas(card, { 
-        scale: 4, 
-        backgroundColor: null,
-        logging: false,
-        useCORS: true 
-    }).then(canvas => {
+    html2canvas(card, { scale: 3, backgroundColor: null }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `SecretMsg_${themeClass}.png`;
+        link.download = `SecretStory_${activeMsgId}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
 
-        // 3. إرجاع الشكل الأصلي وإغلاق المودال
+        // تنظيف
         card.className = originalClass;
-        bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
+        var modalEl = document.getElementById('themeModal');
+        var modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
     });
 }
 </script>
