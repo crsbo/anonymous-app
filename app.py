@@ -10,9 +10,9 @@ app = Flask(__name__)
 # --- إعدادات الأمان وقاعدة البيانات ---
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-123')
 
-# التعديل المهم: بيقرأ من DATABASE_URL لو موجود (على ريندر) وإلا بيشغل SQLite (عندك ع الجهاز)
+# التوصيل بـ PostgreSQL في ريلواي أو SQLite محلياً
 uri = os.environ.get('DATABASE_URL', 'sqlite:///anonymous_app.db')
-if uri.startswith("postgres://"):
+if uri and uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -21,18 +21,22 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- Models (الجداول) ---
+# --- Models (الجداول المعدلة) ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    messages = db.relationship('Message', backref='receiver', lazy=True)
+    is_premium = db.Column(db.Boolean, default=False) # خاصية الاشتراك
+    
+    # علاقات الرسائل
+    received_messages = db.relationship('Message', foreign_keys='Message.receiver_id', backref='receiver_user', lazy=True)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # مجهول لو مش مسجل
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -52,14 +56,14 @@ def register():
         username = request.form.get('username').lower().strip()
         password = request.form.get('password')
         if User.query.filter_by(username=username).first():
-            flash('Username already exists!')
+            flash('الاسم مستخدم بالفعل!')
             return redirect(url_for('register'))
         
         hashed_pw = generate_password_hash(password)
         new_user = User(username=username, password=hashed_pw)
         db.session.add(new_user)
         db.session.commit()
-        flash('Registration successful! Please login.')
+        flash('تم التسجيل بنجاح! سجل دخولك الآن.')
         return redirect(url_for('login'))
     return render_template('auth.html', type='Register')
 
@@ -72,15 +76,15 @@ def login():
         if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for('dashboard'))
-        flash('Invalid username or password')
+        flash('خطأ في الاسم أو كلمة المرور')
     return render_template('auth.html', type='Login')
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    messages = Message.query.filter_by(user_id=current_user.id).order_by(Message.timestamp.desc()).all()
-    count = len(messages)
-    return render_template('dashboard.html', messages=messages, count=count)
+    # جلب الرسائل اللي وصلت لليوزر الحالي
+    messages = Message.query.filter_by(receiver_id=current_user.id).order_by(Message.timestamp.desc()).all()
+    return render_template('dashboard.html', messages=messages, count=len(messages))
 
 @app.route('/user/<username>', methods=['GET', 'POST'])
 def send_message(username):
@@ -88,21 +92,38 @@ def send_message(username):
     if request.method == 'POST':
         msg_content = request.form.get('content')
         if msg_content:
-            new_msg = Message(content=msg_content, user_id=user.id)
+            # بنسجل الـ sender_id لو اللي بيبعت مسجل دخول، عشان صاحب الرسالة يعرف يرد عليه مجهول
+            s_id = current_user.id if current_user.is_authenticated else None
+            new_msg = Message(content=msg_content, receiver_id=user.id, sender_id=s_id)
             db.session.add(new_msg)
             db.session.commit()
-            return "<h1>Message Sent!</h1><a href='/'>Go to App</a>"
+            return "<h1>تم إرسال الرسالة بنجاح!</h1><a href='/'>العودة للرئيسية</a>"
     return render_template('send_msg.html', user=user)
 
-@app.route('/delete/<int:msg_id>', methods=['POST'])
+@app.route('/reply/<int:msg_id>', methods=['GET', 'POST'])
 @login_required
-def delete_message(msg_id):
-    msg = Message.query.get_or_404(msg_id)
-    if msg.user_id == current_user.id:
-        db.session.delete(msg)
-        db.session.commit()
-        flash('Message deleted!')
-    return redirect(url_for('dashboard'))
+def reply(msg_id):
+    original_msg = Message.query.get_or_404(msg_id)
+    # التأكد إن اللي بيرد هو صاحب الرسالة فعلاً
+    if original_msg.receiver_id != current_user.id:
+        return "غير مسموح", 403
+    
+    # لو مفيش sender_id يبقى اللي بعت مكنش مسجل دخول ومينفعش نرد عليه
+    if not original_msg.sender_id:
+        return "لا يمكن الرد على مستخدم غير مسجل", 400
+
+    sender_to_reply = User.query.get(original_msg.sender_id)
+    
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if content:
+            new_reply = Message(content=content, receiver_id=sender_to_reply.id, sender_id=current_user.id)
+            db.session.add(new_reply)
+            db.session.commit()
+            flash('تم إرسال ردك بنجاح!')
+            return redirect(url_for('dashboard'))
+            
+    return render_template('send_msg.html', user=sender_to_reply, is_reply=True)
 
 @app.route('/logout')
 @login_required
@@ -113,4 +134,5 @@ def logout():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
