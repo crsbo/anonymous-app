@@ -105,7 +105,7 @@ def logout():
 def utility_processor():
     def format_date(date):
         # دي بتحول الوقت لشكل "منذ..." باللغة العربية أو الإنجليزية
-        return arrow.get(date).humanize(locale='ar') # لو عايزها إنجليزي شيل locale='ar'
+        return arrow.get(date).humanize() # لو عايزها إنجليزي شيل locale='ar'
     return dict(format_date=format_date)
 # --- الجزء التاني (ده لازم يكون آآآآخر سطرين في الملف خالص) ---
 # --- ده الجزء الأخير في app.py ---
@@ -117,4 +117,5 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 
