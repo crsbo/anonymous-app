@@ -20,7 +20,7 @@
                     <p class="mb-2 text-dark fs-5">{{ msg.content }}</p>
                     
                     <small class="text-muted" style="font-size: 0.7rem;">
-                        <i class="bi bi-clock"></i> Received on: {{ msg.timestamp.strftime('%b %d, %I:%M %p') }}
+                        <i class="bi bi-clock"></i> {{ format_date(msg.timestamp) }}
                     </small>
 
                     <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
@@ -51,3 +51,4 @@ function copyLink() {
 }
 </script>
 {% endblock %}
+
