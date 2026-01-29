@@ -40,12 +40,22 @@
     .theme-opt { cursor: pointer; transition: 0.3s; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; position: relative; }
     .theme-opt:hover { transform: translateY(-5px); }
     .premium-lock { position: absolute; top: -5px; right: -5px; font-size: 1.2rem; color: #ffc107; }
+    
+    /* ستايل التايمر والتلميح */
+    .hint-badge { background: #f8f9fa; border: 1px solid #eee; color: #666; font-size: 0.75rem; border-radius: 10px; padding: 5px 12px; display: inline-block; }
+    .timer-box { font-size: 0.8rem; font-weight: bold; color: #d4af37; }
+    .verified-badge { color: #007bff; font-size: 1.1rem; vertical-align: middle; }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
         <div class="card shadow-sm p-4 mb-4 border-0 dashboard-ui" style="border-radius: 20px;">
-            <h3 class="fw-bold">Welcome, {{ current_user.username }}!</h3>
+            <h3 class="fw-bold">
+                Welcome, {{ current_user.username }} 
+                {% if current_user.is_premium %}
+                <i class="bi bi-patch-check-fill verified-badge" title="Verified Account"></i>
+                {% endif %}
+            </h3>
             <div class="input-group mb-3 mt-3 shadow-sm">
                 <input type="text" id="myLink" class="form-control text-center bg-white border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
                 <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy Link</button>
@@ -60,7 +70,30 @@
                 <div id="msg-card-{{ msg.id }}" class="card shadow-sm text-start position-relative border-0" style="border-radius: 20px; background: white; overflow: hidden;">
                     
                     <div class="dashboard-ui p-4">
-                        <p class="mb-4 fs-5 fw-medium text-dark">{{ msg.content }}</p>
+                        <p class="mb-3 fs-5 fw-medium text-dark">{{ msg.content }}</p>
+                        
+                        {% if msg.hint %}
+                        <div class="mb-3">
+                            <div class="hint-badge shadow-sm">
+                                <i class="bi bi-lightbulb-fill text-warning me-1"></i> Hint: {{ msg.hint }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if msg.sender_name and msg.reveal_time %}
+                        <div class="mb-3 p-2 rounded-3 bg-light d-inline-block border">
+                            {% if now > msg.reveal_time %}
+                                <span class="text-success small fw-bold">
+                                    <i class="bi bi-person-check-fill me-1"></i> Revealed: {{ msg.sender_name }}
+                                </span>
+                            {% else %}
+                                <span class="timer-box" data-endtime="{{ msg.reveal_time.isoformat() }}">
+                                    <i class="bi bi-hourglass-split me-1"></i> Reveal In: <span class="countdown">--:--:--</span>
+                                </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
                         <div class="d-flex align-items-center justify-content-between">
                             <small class="text-muted"><i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}</small>
                             <div class="d-flex align-items-center">
@@ -69,7 +102,7 @@
                                     <span class="badge bg-light text-success border me-2"><i class="bi bi-geo-alt-fill"></i> {{ msg.location_info or 'Location' }}</span>
                                 {% else %}
                                     <a href="{{ url_for('upgrade') }}" class="text-warning text-decoration-none me-3 small fw-bold">
-                                        <i class="bi bi-lock-fill"></i> Unlock Info
+                                        <i class="bi bi-lock-fill"></i> Unlock Details
                                     </a>
                                 {% endif %}
                                 <button class="btn btn-sm btn-dark rounded-pill py-1 px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
@@ -125,6 +158,31 @@ let activeMsgId = null;
 function copyLink() {
     var copyText = document.getElementById("myLink"); copyText.select(); document.execCommand("copy"); alert("Link Copied! 🚀");
 }
+
+// كود التايمر (Countdown Timer)
+function updateTimers() {
+    document.querySelectorAll('.timer-box').forEach(box => {
+        const endTime = new Date(box.dataset.endtime).getTime();
+        const now = new Date().getTime();
+        const distance = endTime - now;
+
+        if (distance < 0) {
+            box.innerHTML = '<i class="bi bi-person-check-fill me-1 text-success"></i> Refresh to reveal name';
+            return;
+        }
+
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        box.querySelector('.countdown').innerText = 
+            (hours < 10 ? "0" + hours : hours) + ":" + 
+            (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+            (seconds < 10 ? "0" + seconds : seconds);
+    });
+}
+setInterval(updateTimers, 1000);
+
 function downloadStory(themeClass) {
     if (!activeMsgId) return;
     const card = document.getElementById('msg-card-' + activeMsgId);
