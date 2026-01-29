@@ -19,9 +19,23 @@
                 <div class="card shadow-sm p-3 text-start position-relative border-0" style="background: #ffffff;">
                     <p class="mb-2 text-dark fs-5">{{ msg.content }}</p>
                     
-                    <small class="text-muted" style="font-size: 0.7rem;">
-                        <i class="bi bi-clock"></i> {{ format_date(msg.timestamp) }}
-                    </small>
+                    <div class="d-flex align-items-center justify-content-between mt-2">
+                        <small class="text-muted" style="font-size: 0.7rem;">
+                            <i class="bi bi-clock"></i> {{ format_date(msg.timestamp) }}
+                        </small>
+
+                        <div class="premium-info">
+                            {% if current_user.is_premium %}
+                                <span class="badge bg-light text-primary border" style="font-size: 0.65rem;">
+                                    <i class="bi bi-phone"></i> {{ msg.device_info or 'Unknown' }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.65rem; cursor: pointer;" title="Upgrade to see device info">
+                                    <i class="bi bi-lock-fill"></i> <span class="d-none d-sm-inline">Device info locked</span>
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
 
                     <form action="{{ url_for('delete_message', msg_id=msg.id) }}" method="POST" class="position-absolute top-0 end-0 m-2">
                         <button type="submit" class="btn btn-link text-danger p-1" onclick="return confirm('Delete this message?')">
@@ -51,4 +65,3 @@ function copyLink() {
 }
 </script>
 {% endblock %}
-
