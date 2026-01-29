@@ -139,7 +139,8 @@ def logout():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
-    # تعديل مهم لريلواي: استخدام البورت من الـ Environment
+        db.create_all()  # ده السطر اللي بيبني الجداول الجديدة أول ما ترفع الكود
+    
+    # ده التعديل الذهبي لريلواي
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
