@@ -87,22 +87,21 @@ def send_message(username):
         agent = request.headers.get('User-Agent', '')
         device = "iPhone" if "iPhone" in agent else "Android" if "Android" in agent else "PC"
 
-        # 2. تحديد المدينة (Location)
-        # في ريلواي بنجيب الـ IP الحقيقي من X-Forwarded-For
-        ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0]
+        # 2. تحديد المدينة (مع حماية من الـ Errors)
         location = "Unknown City"
-        
         try:
-            # بنبعت الـ IP لموقع خارجي عشان يطلعلنا المدينة
-            geo_res = requests.get(f'http://ip-api.com/json/{ip_addr}?fields=status,city,country', timeout=5).json()
+            # بنحاول نجيب الـ IP الحقيقي للمستخدم في ريلواي
+            ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
+            
+            # بنجرب نجيب اللوكيشن، وبنحط timeout عشان الكود ميعلقش
+            geo_res = requests.get(f'http://ip-api.com/json/{ip_addr}', timeout=3).json()
             if geo_res.get('status') == 'success':
-                # بنخزن المدينة والدولة مع بعض
                 location = f"{geo_res.get('city')}, {geo_res.get('country')}"
-        except:
-            location = "Location Error"
+        except Exception as e:
+            print(f"Location Error: {e}") # بيطبع الغلط في الـ Logs عندك
+            location = "Location Unavailable"
 
         if content:
-            # بنسيف البيانات دي في الجدول الجديد
             new_msg = Message(
                 content=content, 
                 user_id=user.id, 
@@ -114,6 +113,8 @@ def send_message(username):
             return "<h1>Sent Successfully!</h1><a href='/'>Back</a>"
             
     return render_template('send_msg.html', user=user)
+            
+
 # رابط سري ليك عشان تفعل البريميوم لنفسك وتجرب
 @app.route('/be-pro')
 @login_required
@@ -153,6 +154,7 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
 
