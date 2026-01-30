@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 text-center">
+        <div class="card shadow-lg border-0 p-5" style="border-radius: 30px; background: white;">
+            <div class="mb-4">
+                <div class="display-1 text-success animate__animated animate__bounceIn">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+            </div>
+            
+            <h2 class="fw-bold mb-3">Message Sent! 🚀</h2>
+            <p class="text-muted mb-4">Your secret message has been delivered safely and anonymously.</p>
+            
+            <div class="bg-light p-4 rounded-4 mb-4">
+                <h6 class="fw-bold text-dark mb-2">Want to receive secret messages too?</h6>
+                <p class="small text-muted">Create your own link and see what your friends think about you!</p>
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow">
+                    Create My Own Link ✨
+                </a>
+            </div>
+
+            <div class="mt-2">
+                <a href="/" class="text-muted small text-decoration-none">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+{% endblock %}
