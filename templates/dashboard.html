@@ -37,34 +37,32 @@
     .view-shooting .dashboard-ui { display: none !important; }
     .trash-icon { color: #dc3545; border: none; background: none; transition: 0.2s; }
     .trash-icon:hover { transform: scale(1.2); }
-    .theme-opt { cursor: pointer; transition: 0.3s; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; position: relative; }
+    .theme-opt { cursor: pointer; transition: 0.3s; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; position: relative; color: white; }
     .theme-opt:hover { transform: translateY(-5px); }
     .premium-lock { position: absolute; top: -5px; right: -5px; font-size: 1.2rem; color: #ffc107; }
     
     /* ستايل اللعبة والنقاط واللوحة */
-    .points-badge { background: linear-gradient(45deg, #FFD700, #FFA500); color: black; font-weight: 900; border: none; }
-    .quiz-option { cursor: pointer; transition: 0.2s; border: 1px solid #ddd; background: #fff; padding: 10px; border-radius: 12px; font-size: 0.85rem; }
-    .quiz-option:hover { background: #f0f0f0; border-color: #333; }
-    .hint-badge { background: #f8f9fa; border: 1px solid #eee; color: #666; font-size: 0.75rem; border-radius: 10px; padding: 5px 12px; display: inline-block; }
+    .points-badge { background: transparent !important; border: 2px solid var(--neon-cyan) !important; color: var(--neon-cyan) !important; font-weight: 900; }
+    .quiz-option { cursor: pointer; transition: 0.2s; border: 1px solid #444; background: #222; padding: 10px; border-radius: 12px; font-size: 0.85rem; color: white; }
+    .quiz-option:hover { background: var(--neon-cyan); color: black; border-color: var(--neon-cyan); }
+    .hint-badge { background: rgba(255,255,255,0.05); border: 1px solid #333; color: #ccc; font-size: 0.75rem; border-radius: 10px; padding: 5px 12px; display: inline-block; }
     
-    .nav-rank .nav-link { color: #666; font-weight: bold; border: none; border-radius: 15px; padding: 10px 20px; }
-    .nav-rank .nav-link.active { background: #000 !important; color: #fff !important; }
-    .rank-item { transition: 0.3s; }
-    .rank-item:hover { background: #f8f9fa !important; }
+    .nav-rank .nav-link { color: #888; font-weight: bold; border: none; border-radius: 15px; padding: 10px 20px; }
+    .nav-rank .nav-link.active { background: var(--neon-pink) !important; color: #fff !important; box-shadow: 0 0 10px var(--neon-pink); }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
-        <div class="card shadow-sm p-4 mb-4 border-0 dashboard-ui" style="border-radius: 20px;">
+        <div class="card shadow-sm p-4 mb-4 border-0 dashboard-ui">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3 class="fw-bold mb-0">Welcome, {{ current_user.username }}</h3>
+                <h3 class="fw-bold mb-0 text-white">Welcome, {{ current_user.username }}</h3>
                 <div class="badge points-badge p-2 px-3 rounded-pill shadow-sm">
                     <i class="bi bi-trophy-fill me-1"></i> {{ current_user.points or 0 }} Points
                 </div>
             </div>
             
             <div class="input-group mb-2 shadow-sm">
-                <input type="text" id="myLink" class="form-control text-center bg-white border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
+                <input type="text" id="myLink" class="form-control text-center bg-dark text-white border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
                 <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy Link</button>
             </div>
 
@@ -83,7 +81,7 @@
                 <h6 class="mb-0 fw-bold"><i class="bi bi-star-fill text-warning me-2"></i> LEADERBOARD</h6>
             </div>
             <div class="card-body p-0">
-                <ul class="nav nav-pills nav-rank nav-fill bg-light p-2" id="rankTabs" role="tablist">
+                <ul class="nav nav-pills nav-rank nav-fill bg-dark p-2" id="rankTabs" role="tablist">
                     <li class="nav-item">
                         <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#friendsRank">Friends 👥</button>
                     </li>
@@ -95,8 +93,8 @@
                     <div class="tab-pane fade show active" id="friendsRank">
                         {% if friends_top %}
                             {% for f_user in friends_top %}
-                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 rank-item {{ 'border border-primary' if f_user.id == current_user.id else 'bg-light' }}">
-                                <span class="small fw-bold">#{{ loop.index }} {{ f_user.username }} {% if f_user.id == current_user.id %}(Me){% endif %}</span>
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 rank-item {{ 'border border-primary' if f_user.id == current_user.id else '' }}">
+                                <span class="small fw-bold text-white">#{{ loop.index }} {{ f_user.username }} {% if f_user.id == current_user.id %}(Me){% endif %}</span>
                                 <span class="badge bg-primary rounded-pill">{{ f_user.points }} Pts</span>
                             </div>
                             {% endfor %}
@@ -106,9 +104,9 @@
                     </div>
                     <div class="tab-pane fade" id="globalRank">
                         {% for g_user in global_top %}
-                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 rank-item bg-light">
-                            <span class="small fw-bold">#{{ loop.index }} {{ g_user.username }}</span>
-                            <span class="badge bg-dark rounded-pill">{{ g_user.points }} Pts</span>
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 rank-item">
+                            <span class="small fw-bold text-white">#{{ loop.index }} {{ g_user.username }}</span>
+                            <span class="badge bg-secondary rounded-pill">{{ g_user.points }} Pts</span>
                         </div>
                         {% endfor %}
                     </div>
@@ -116,18 +114,18 @@
             </div>
         </div>
 
-        <h5 class="text-start mb-3 fw-bold dashboard-ui">Messages</h5>
+        <h5 class="text-start mb-3 fw-bold text-white dashboard-ui">Messages</h5>
         <div class="row">
             {% for msg in messages %}
             <div class="col-12 mb-3">
-                <div id="msg-card-{{ msg.id }}" class="card shadow-sm text-start position-relative border-0" style="border-radius: 20px; background: white; overflow: hidden;">
+                <div id="msg-card-{{ msg.id }}" class="card shadow-sm text-start position-relative border-0" style="border-radius: 20px; overflow: hidden;">
                     
                     <div class="dashboard-ui p-4">
-                        <p class="mb-3 fs-5 fw-medium text-dark">{{ msg.content }}</p>
+                        <p class="mb-3 fs-5 fw-medium text-white">{{ msg.content }}</p>
                         
                         {% if msg.correct_name and not msg.is_guessed %}
-                        <div class="bg-light p-3 rounded-4 mb-3 border shadow-sm text-center">
-                            <p class="small fw-bold mb-2 text-dark">Who sent this? Guess & Earn +1 Pt 🎯</p>
+                        <div class="bg-dark p-3 rounded-4 mb-3 border border-secondary shadow-sm text-center">
+                            <p class="small fw-bold mb-2 text-white">Who sent this? Guess & Earn +1 Pt 🎯</p>
                             <div class="d-grid gap-2">
                                 <button class="quiz-option fw-bold" onclick="submitGuess({{msg.id}}, '{{msg.name_opt_1}}')">{{msg.name_opt_1}}</button>
                                 <button class="quiz-option fw-bold" onclick="submitGuess({{msg.id}}, '{{msg.name_opt_2}}')">{{msg.name_opt_2}}</button>
@@ -152,14 +150,14 @@
                             <small class="text-muted"><i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}</small>
                             <div class="d-flex align-items-center">
                                 {% if current_user.is_premium %}
-                                    <span class="badge bg-light text-primary border me-1"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</span>
+                                    <span class="badge bg-dark text-primary border border-primary me-1"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</span>
                                 {% else %}
                                     <a href="{{ url_for('upgrade') }}" class="text-warning text-decoration-none me-3 small fw-bold">
                                         <i class="bi bi-lock-fill"></i> Reveal
                                     </a>
                                 {% endif %}
                                 <button class="btn btn-sm btn-dark rounded-pill py-1 px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
-                                    <i class="bi bi-instagram me-1"></i> Share
+                                    <i class="bi bi-share-fill me-1"></i> Share to Socials
                                 </button>
                             </div>
                         </div>
@@ -189,10 +187,10 @@
 
 <div class="modal fade" id="themeModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
-      <div class="modal-header bg-dark text-white border-0 py-3"><h5 class="modal-title fw-bold w-100 text-center">Select Style 🎨</h5></div>
-      <div class="modal-body py-5 bg-light d-flex justify-content-around">
-            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #222; border: 3px solid #fff; color: #fff;">Dark</div>
+    <div class="modal-content border-0 shadow-lg bg-dark" style="border-radius: 25px;">
+      <div class="modal-header bg-dark text-white border-secondary py-3"><h5 class="modal-title fw-bold w-100 text-center">Select Style 🎨</h5></div>
+      <div id="modalBody" class="modal-body py-5 d-flex justify-content-around">
+            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #222; border: 3px solid #fff;">Dark</div>
             <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-dark-gold')"{% else %}onclick="window.location.href='{{ url_for('upgrade') }}'"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">
                 {% if not current_user.is_premium %}<i class="bi bi-lock-fill premium-lock"></i>{% endif %}Gold
             </div>
@@ -207,6 +205,47 @@
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script>
 let activeMsgId = null;
+
+function downloadStory(themeClass) {
+    if (!activeMsgId) return;
+    
+    const modalBody = document.getElementById('modalBody');
+    const originalContent = modalBody.innerHTML;
+    modalBody.innerHTML = '<div class="text-center w-100"><div class="spinner-border text-info" role="status"></div><p class="mt-2 text-white">Preparing Share...</p></div>';
+
+    const card = document.getElementById('msg-card-' + activeMsgId);
+    const originalClass = card.className;
+    card.classList.add(themeClass); 
+    card.classList.add('view-shooting');
+    
+    html2canvas(card, { width: 1080, height: 1920, scale: 2, useCORS: true, backgroundColor: '#000' }).then(canvas => {
+        canvas.toBlob(blob => {
+            const file = new File([blob], "Secret_Message.png", { type: "image/png" });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'Secret Sphere Message',
+                    text: 'Guess who sent me this! 🕵️‍♂️'
+                }).catch(() => { saveImageFallback(canvas); });
+            } else {
+                saveImageFallback(canvas);
+            }
+            
+            card.className = originalClass;
+            modalBody.innerHTML = originalContent;
+            bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
+        }, 'image/png');
+    });
+}
+
+function saveImageFallback(canvas) {
+    const link = document.createElement('a'); 
+    link.download = `Secret_Message.png`; 
+    link.href = canvas.toDataURL("image/png"); 
+    link.click();
+    alert("Image saved to your gallery! Share it to your stories manually.");
+}
 
 function submitGuess(msgId, answer) {
     fetch(`/check_answer/${msgId}`, {
@@ -230,23 +269,6 @@ function copyLink() {
     copyText.select(); 
     document.execCommand("copy"); 
     alert("Link Copied! 🚀");
-}
-
-function downloadStory(themeClass) {
-    if (!activeMsgId) return;
-    const card = document.getElementById('msg-card-' + activeMsgId);
-    const originalClass = card.className;
-    card.classList.add(themeClass); 
-    card.classList.add('view-shooting');
-    
-    html2canvas(card, { width: 1080, height: 1920, scale: 2, useCORS: true }).then(canvas => {
-        const link = document.createElement('a'); 
-        link.download = `Story_Guess.png`; 
-        link.href = canvas.toDataURL("image/png"); 
-        link.click();
-        card.className = originalClass;
-        bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
-    });
 }
 </script>
 {% endblock %}
