@@ -9,108 +9,113 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <style>
-        :root {
-            --neon-pink: #ff2d95;
-            --neon-cyan: #00f3ff;
-            --bg-dark: #0d0d0d;
-            --card-bg: #1a1a1a;
-            --glass-bg: rgba(26, 26, 26, 0.8);
-        }
+    :root {
+        --neon-pink: #ff2d95;
+        --neon-cyan: #00f3ff;
+        --bg-dark: #0d0d0d;
+        --card-bg: #1a1a1a;
+        --glass-bg: rgba(26, 26, 26, 0.8);
+        --text-bright: #ffffff;
+        --text-muted: #b0b0b0;
+    }
 
-        body { 
-            background-color: var(--bg-dark); 
-            color: #ffffff;
-            font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
-            background-image: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0d0d0d 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+    body { 
+        background-color: var(--bg-dark); 
+        color: var(--text-bright);
+        font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+        background-image: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0d0d0d 100%);
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
 
-        /* Navbar Neon Style */
-        .navbar { 
-            background: var(--glass-bg) !important;
-            backdrop-filter: blur(15px);
-            border-bottom: 2px solid var(--neon-pink);
-            box-shadow: 0 5px 20px rgba(255, 45, 149, 0.2);
-            padding: 15px 0;
-        }
-        .navbar-brand {
-            color: var(--neon-cyan) !important;
-            text-shadow: 0 0 10px var(--neon-cyan);
-            font-weight: 800 !important;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
+    /* --- تحسينات الوضوح (Visibility Upgrades) --- */
+    
+    /* العناوين الأساسية */
+    h1, h2, h3, h4, h5, h6, .fw-bold {
+        color: var(--text-bright) !important;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
 
-        /* Container & Alerts */
-        .alert { 
-            border-radius: 15px; 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            background: var(--card-bg);
-            color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        .alert-danger { border-left: 5px solid var(--neon-pink); }
-        .alert-success { border-left: 5px solid var(--neon-cyan); }
+    /* النصوص الثانوية - جعلها رمادي فاتح جداً بدل الرمادي الغامق */
+    .text-muted {
+        color: var(--text-muted) !important;
+    }
 
-        /* General Card Neon Fix */
-        .card { 
-            background: var(--card-bg) !important; 
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
-            border-radius: 25px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
-        }
-        
-        /* Buttons Neon Glow */
-        .btn-primary { 
-            background: var(--neon-pink) !important; 
-            border: none !important;
-            box-shadow: 0 0 15px rgba(255, 45, 149, 0.4);
-            font-weight: 600;
-            border-radius: 12px;
-        }
-        .btn-primary:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 0 25px var(--neon-pink);
-        }
+    /* خانات الكتابة (Inputs) */
+    .form-control {
+        background: #222 !important;
+        border: 1px solid #444 !important;
+        color: var(--text-bright) !important; /* لون الكتابة أبيض */
+        border-radius: 12px;
+    }
 
-        .btn-outline-light {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-        }
-        .btn-outline-light:hover {
-            background: var(--neon-cyan);
-            color: black;
-            box-shadow: 0 0 15px var(--neon-cyan);
-        }
+    /* لون الكلام التوضيحي داخل الخانة (Placeholder) */
+    .form-control::placeholder {
+        color: #888 !important;
+    }
 
-        /* Watermark Modern Style */
-        .watermark {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 9999; display: flex;
-            flex-wrap: wrap; align-items: center; justify-content: center;
-            gap: 100px; opacity: 0.02; transform: rotate(-30deg);
-            font-size: 40px; font-weight: 900; color: var(--neon-pink);
-        }
+    /* نصوص الفورم (Labels) */
+    .form-label, label {
+        color: var(--neon-cyan) !important;
+        font-weight: 600;
+        text-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
+        margin-bottom: 8px;
+    }
 
-        /* Inbox Badge Neon */
-        .bg-primary {
-            background-color: transparent !important;
-            border: 1px solid var(--neon-pink);
-            color: var(--neon-pink) !important;
-            text-shadow: 0 0 5px var(--neon-pink);
-        }
+    /* نصوص الرسائل في الداشبورد */
+    .fs-5.fw-medium {
+        color: var(--text-bright) !important;
+    }
 
-        /* Leaderboard Items */
-        .rank-item {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            color: white !important;
-        }
-        .rank-item.border-primary {
-            border-color: var(--neon-cyan) !important;
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-        }
+    /* Navbar Neon Style */
+    .navbar { 
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(15px);
+        border-bottom: 2px solid var(--neon-pink);
+        box-shadow: 0 5px 20px rgba(255, 45, 149, 0.2);
+        padding: 15px 0;
+    }
+
+    .navbar-brand {
+        color: var(--neon-cyan) !important;
+        text-shadow: 0 0 10px var(--neon-cyan);
+        font-weight: 800 !important;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    /* Alerts Fix */
+    .alert { 
+        border-radius: 15px; 
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        background: var(--card-bg);
+        color: var(--text-bright) !important;
+    }
+
+    /* General Card */
+    .card { 
+        background: var(--card-bg) !important; 
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 25px !important;
+    }
+    
+    /* Buttons */
+    .btn-primary { 
+        background: var(--neon-pink) !important; 
+        border: none !important;
+        box-shadow: 0 0 15px rgba(255, 45, 149, 0.4);
+        font-weight: 600;
+        color: white !important;
+    }
+
+    /* Watermark */
+    .watermark {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 9999; display: flex;
+        flex-wrap: wrap; align-items: center; justify-content: center;
+        gap: 100px; opacity: 0.02; transform: rotate(-30deg);
+        font-size: 40px; font-weight: 900; color: var(--neon-pink);
+    }
     </style>
 </head>
 <body>
@@ -161,3 +166,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
