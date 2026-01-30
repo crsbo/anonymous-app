@@ -74,17 +74,13 @@ def register():
     if request.method == 'POST':
         raw_username = request.form.get('username', '').strip()
         password = request.form.get('password')
-
-        # منع الحروف الـ Capital تماماً من السيرفر كأمان إضافي
         if any(char.isupper() for char in raw_username):
             flash('Please use lowercase letters only for your username.', 'danger')
             return redirect(url_for('register'))
-
         username = raw_username.lower()
         if User.query.filter_by(username=username).first():
             flash('Username already exists! Try another one.', 'danger')
             return redirect(url_for('register'))
-
         new_user = User(username=username, password=generate_password_hash(password))
         db.session.add(new_user)
         db.session.commit()
@@ -98,11 +94,9 @@ def login():
         username = request.form.get('username', '').lower().strip()
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
-
         if not user or not check_password_hash(user.password, password):
             flash('Invalid username or password. Please try again.', 'danger')
             return redirect(url_for('login'))
-
         login_user(user)
         return redirect(url_for('dashboard'))
     return render_template('auth.html', type='Login')
@@ -117,14 +111,17 @@ def dashboard():
     friends_top = User.query.filter(User.id.in_(friend_ids)).order_by(User.points.desc()).all()
     return render_template('dashboard.html', messages=messages, count=len(messages), global_top=global_top, friends_top=friends_top, now=datetime.utcnow())
 
+# رابط صفحة النجاح
+@app.route('/sent_success')
+def sent_success():
+    return render_template('sent_success.html')
+
 @app.route('/user/<username>', methods=['GET', 'POST'])
 def send_message(username):
-    # تحويل اليوزرنيم لسمول لضمان عدم حدوث 404 لو كتب اللينك كابيتال
     user = User.query.filter_by(username=username.lower()).first()
-    
     if not user:
         flash(f'User "{username}" not found. Make sure the link is correct.', 'danger')
-        return redirect(url_for('register')) # توجيه لصفحة التسجيل بدل 404
+        return redirect(url_for('register'))
 
     if request.method == 'POST':
         ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
@@ -140,8 +137,10 @@ def send_message(username):
         new_msg = Message(content=content, user_id=user.id, sender_ip=ip_addr, name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, correct_name=final_correct_name)
         db.session.add(new_msg)
         db.session.commit()
-        flash("Secret message sent! 🚀", "success")
-        return redirect(url_for('send_message', username=username))
+        
+        # بدلاً من عمل flash لنفس الصفحة، نوجه المستخدم لصفحة النجاح
+        return redirect(url_for('sent_success'))
+        
     return render_template('send_msg.html', user=user)
 
 @app.route('/check_answer/<int:msg_id>', methods=['POST'])
