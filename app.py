@@ -95,7 +95,7 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
         if not user or not check_password_hash(user.password, password):
-            flash('Invalid username or password. Please try again.', 'danger')
+            flash('Invalid username or password.', 'danger')
             return redirect(url_for('login'))
         login_user(user)
         return redirect(url_for('dashboard'))
@@ -109,9 +109,19 @@ def dashboard():
     friend_ids = current_user.get_friend_ids()
     friend_ids.append(current_user.id)
     friends_top = User.query.filter(User.id.in_(friend_ids)).order_by(User.points.desc()).all()
-    return render_template('dashboard.html', messages=messages, count=len(messages), global_top=global_top, friends_top=friends_top, now=datetime.utcnow())
+    return render_template('dashboard.html', 
+                           messages=messages, 
+                           count=len(messages), 
+                           global_top=global_top, 
+                           friends_top=friends_top, 
+                           now=datetime.utcnow())
 
-# رابط صفحة النجاح
+@app.route('/upgrade')
+@login_required
+def upgrade():
+    # هنا ممكن تكرار كود تفعيل البريميوم أو صفحة دفع
+    return "<h3>Premium Membership coming soon! 🚀</h3><br><a href='/dashboard'>Back to Dashboard</a>"
+
 @app.route('/sent_success')
 def sent_success():
     return render_template('sent_success.html')
@@ -120,27 +130,18 @@ def sent_success():
 def send_message(username):
     user = User.query.filter_by(username=username.lower()).first()
     if not user:
-        flash(f'User "{username}" not found. Make sure the link is correct.', 'danger')
+        flash(f'User "{username}" not found.', 'danger')
         return redirect(url_for('register'))
-
     if request.method == 'POST':
         ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
         content = request.form.get('content')
         opt1 = request.form.get('opt1'); opt2 = request.form.get('opt2'); opt3 = request.form.get('opt3')
         correct_choice = request.form.get('correct')
-        
-        final_correct_name = None
-        if correct_choice == "1": final_correct_name = opt1
-        elif correct_choice == "2": final_correct_name = opt2
-        elif correct_choice == "3": final_correct_name = opt3
-
+        final_correct_name = opt1 if correct_choice == "1" else opt2 if correct_choice == "2" else opt3
         new_msg = Message(content=content, user_id=user.id, sender_ip=ip_addr, name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, correct_name=final_correct_name)
         db.session.add(new_msg)
         db.session.commit()
-        
-        # بدلاً من عمل flash لنفس الصفحة، نوجه المستخدم لصفحة النجاح
         return redirect(url_for('sent_success'))
-        
     return render_template('send_msg.html', user=user)
 
 @app.route('/check_answer/<int:msg_id>', methods=['POST'])
@@ -161,7 +162,7 @@ def check_answer(msg_id):
             return jsonify({"status": "correct", "points": current_user.points})
         else:
             db.session.commit()
-            return jsonify({"status": "correct", "points": current_user.points, "message": "No new points for 24h"})
+            return jsonify({"status": "correct", "points": current_user.points, "message": "24h limit"})
     return jsonify({"status": "wrong"})
 
 @app.route('/add_friend/<int:friend_id>', methods=['POST'])
@@ -173,7 +174,6 @@ def add_friend(friend_id):
         new_f = Friendship(user_id=current_user.id, friend_id=friend_id)
         db.session.add(new_f)
         db.session.commit()
-        flash("Friend added! 🤝", "success")
     return redirect(url_for('dashboard'))
 
 @app.route('/delete/<int:msg_id>', methods=['POST'])
