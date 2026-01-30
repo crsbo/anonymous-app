@@ -1,21 +1,10 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    /* 1. إعدادات صورة الاستوري (NGL Style) */
-    .view-shooting {
-        width: 1080px !important; height: 1920px !important;
-        display: flex !important; align-items: center !important; justify-content: center !important;
-        border: none !important; border-radius: 0 !important;
-    }
-
-    .story-card-wrapper {
-        width: 85% !important; border-radius: 45px !important;
-        overflow: hidden !important; display: none;
-        box-shadow: 0 35px 70px rgba(0,0,0,0.7) !important;
-    }
+    /* ... (نفس إعدادات الاستوري اللي عندك) ... */
+    .view-shooting { width: 1080px !important; height: 1920px !important; display: flex !important; align-items: center !important; justify-content: center !important; border: none !important; border-radius: 0 !important; }
+    .story-card-wrapper { width: 85% !important; border-radius: 45px !important; overflow: hidden !important; display: none; box-shadow: 0 35px 70px rgba(0,0,0,0.7) !important; }
     .view-shooting .story-card-wrapper { display: block !important; }
-
-    /* تنسيق النصوص جوه الصورة */
     .story-top-label { padding: 35px !important; font-size: 2rem !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: 4px; }
     .story-body { background: rgba(0,0,0,0.95) !important; padding: 90px 45px !important; min-height: 450px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
     .story-msg { font-size: 2.6rem !important; line-height: 1.4; font-weight: 600; color: #fff !important; margin-bottom: 40px !important; }
@@ -24,11 +13,9 @@
     .theme-dark.view-shooting { background: #121212 !important; }
     .theme-dark .story-card-wrapper { border: 7px solid #ffffff !important; }
     .theme-dark .story-top-label { background: #ffffff !important; color: #000000 !important; }
-
     .theme-dark-gold.view-shooting { background: #000 !important; }
     .theme-dark-gold .story-card-wrapper { border: 7px solid #d4af37 !important; }
     .theme-dark-gold .story-top-label { background: #d4af37 !important; color: #000 !important; }
-
     .theme-neon.view-shooting { background: #050505 !important; }
     .theme-neon .story-card-wrapper { border: 7px solid #39ff14 !important; }
     .theme-neon .story-top-label { background: #39ff14 !important; color: #000 !important; }
@@ -39,16 +26,36 @@
     .trash-icon:hover { transform: scale(1.2); }
     .theme-opt { cursor: pointer; transition: 0.3s; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; position: relative; color: white; }
     .theme-opt:hover { transform: translateY(-5px); }
-    .premium-lock { position: absolute; top: -5px; right: -5px; font-size: 1.2rem; color: #ffc107; }
     
     /* ستايل اللعبة والنقاط واللوحة */
     .points-badge { background: transparent !important; border: 2px solid var(--neon-cyan) !important; color: var(--neon-cyan) !important; font-weight: 900; }
     .quiz-option { cursor: pointer; transition: 0.2s; border: 1px solid #444; background: #222; padding: 10px; border-radius: 12px; font-size: 0.85rem; color: white; }
     .quiz-option:hover { background: var(--neon-cyan); color: black; border-color: var(--neon-cyan); }
-    .hint-badge { background: rgba(255,255,255,0.05); border: 1px solid #333; color: #ccc; font-size: 0.75rem; border-radius: 10px; padding: 5px 12px; display: inline-block; }
     
-    .nav-rank .nav-link { color: #888; font-weight: bold; border: none; border-radius: 15px; padding: 10px 20px; }
-    .nav-rank .nav-link.active { background: var(--neon-pink) !important; color: #fff !important; box-shadow: 0 0 10px var(--neon-pink); }
+    /* ستايل زرار التلميح الجديد */
+    .hint-btn {
+        background: transparent;
+        border: 1px dashed var(--neon-pink);
+        color: var(--neon-pink);
+        font-size: 0.75rem;
+        padding: 5px 15px;
+        border-radius: 10px;
+        transition: 0.3s;
+    }
+    .hint-btn:hover {
+        background: var(--neon-pink);
+        color: white;
+        box-shadow: 0 0 10px var(--neon-pink);
+    }
+    .unlocked-hint {
+        background: rgba(255, 45, 149, 0.1);
+        border: 1px solid var(--neon-pink);
+        color: var(--neon-pink);
+        font-weight: 800;
+        padding: 5px 15px;
+        border-radius: 10px;
+        text-shadow: 0 0 5px var(--neon-pink);
+    }
 </style>
 
 <div class="row justify-content-center">
@@ -65,14 +72,6 @@
                 <input type="text" id="myLink" class="form-control text-center bg-dark text-white border-0" value="{{ url_for('send_message', username=current_user.username, _external=True) }}" readonly>
                 <button class="btn btn-primary px-4 fw-bold" onclick="copyLink()">Copy Link</button>
             </div>
-
-            <div class="mb-3">
-                <p class="text-muted mb-0" style="font-size: 0.75rem; letter-spacing: 0.3px;">
-                    <i class="bi bi-shield-check text-success me-1"></i> 
-                    <strong>Fair Play:</strong> You can earn only 1 point per device every 24 hours.
-                </p>
-            </div>
-
             <div class="badge bg-primary p-2 px-4 rounded-pill shadow-sm">Inbox: {{ count }} Messages</div>
         </div>
 
@@ -91,22 +90,10 @@
                 </ul>
                 <div class="tab-content p-3">
                     <div class="tab-pane fade show active" id="friendsRank">
-                        {% if friends_top %}
-                            {% for f_user in friends_top %}
-                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 rank-item {{ 'border border-primary' if f_user.id == current_user.id else '' }}">
-                                <span class="small fw-bold text-white">#{{ loop.index }} {{ f_user.username }} {% if f_user.id == current_user.id %}(Me){% endif %}</span>
-                                <span class="badge bg-primary rounded-pill">{{ f_user.points }} Pts</span>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <p class="text-muted small py-3">No friends yet. Add friends from their links!</p>
-                        {% endif %}
-                    </div>
-                    <div class="tab-pane fade" id="globalRank">
-                        {% for g_user in global_top %}
-                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 rank-item">
-                            <span class="small fw-bold text-white">#{{ loop.index }} {{ g_user.username }}</span>
-                            <span class="badge bg-secondary rounded-pill">{{ g_user.points }} Pts</span>
+                        {% for f_user in friends_top %}
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded-3 rank-item {{ 'border border-primary' if f_user.id == current_user.id else '' }}">
+                            <span class="small fw-bold text-white">#{{ loop.index }} {{ f_user.username }}</span>
+                            <span class="badge bg-primary rounded-pill">{{ f_user.points }} Pts</span>
                         </div>
                         {% endfor %}
                     </div>
@@ -132,32 +119,25 @@
                                 <button class="quiz-option fw-bold" onclick="submitGuess({{msg.id}}, '{{msg.name_opt_3}}')">{{msg.name_opt_3}}</button>
                             </div>
                         </div>
-                        {% elif msg.is_guessed %}
-                        <div class="badge bg-success w-100 p-2 mb-3 rounded-pill text-center">
-                            <i class="bi bi-check-circle-fill"></i> Solved! You earned a point.
-                        </div>
                         {% endif %}
 
-                        {% if msg.hint %}
                         <div class="mb-3">
-                            <div class="hint-badge shadow-sm">
-                                <i class="bi bi-lightbulb-fill text-warning me-1"></i> Hint: {{ msg.hint }}
-                            </div>
+                            {% if msg.hint_unlocked %}
+                                <div class="unlocked-hint d-inline-block">
+                                    <i class="bi bi-unlock-fill me-1"></i> Sender's 1st Letter: <strong>{{ msg.sender_name_hint if msg.sender_name_hint else '?' }}</strong>
+                                </div>
+                            {% else %}
+                                <button class="hint-btn" onclick="unlockHint({{ msg.id }})">
+                                    <i class="bi bi-key-fill me-1"></i> Unlock Name Hint (5 Pts)
+                                </button>
+                            {% endif %}
                         </div>
-                        {% endif %}
 
                         <div class="d-flex align-items-center justify-content-between mt-3">
                             <small class="text-muted"><i class="bi bi-clock-fill me-1"></i> {{ format_date(msg.timestamp) }}</small>
                             <div class="d-flex align-items-center">
-                                {% if current_user.is_premium %}
-                                    <span class="badge bg-dark text-primary border border-primary me-1"><i class="bi bi-phone"></i> {{ msg.device_info or 'Device' }}</span>
-                                {% else %}
-                                    <a href="{{ url_for('upgrade') }}" class="text-warning text-decoration-none me-3 small fw-bold">
-                                        <i class="bi bi-lock-fill"></i> Reveal
-                                    </a>
-                                {% endif %}
                                 <button class="btn btn-sm btn-dark rounded-pill py-1 px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#themeModal" onclick="activeMsgId = '{{ msg.id }}'">
-                                    <i class="bi bi-share-fill me-1"></i> Share to Socials
+                                    <i class="bi bi-share-fill me-1"></i> Share Story
                                 </button>
                             </div>
                         </div>
@@ -171,11 +151,6 @@
                         <div class="story-top-label text-center">ANONYMOUS MESSAGES</div>
                         <div class="story-body text-center">
                             <div class="story-msg">{{ msg.content }}</div>
-                            {% if msg.is_guessed %}
-                            <div class="badge bg-warning text-dark p-2 mt-2 px-4 rounded-pill fw-bold">
-                                🏆 I GUESSED THE SENDER! +1 POINT
-                            </div>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -185,66 +160,25 @@
     </div>
 </div>
 
-<div class="modal fade" id="themeModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg bg-dark" style="border-radius: 25px;">
-      <div class="modal-header bg-dark text-white border-secondary py-3"><h5 class="modal-title fw-bold w-100 text-center">Select Style 🎨</h5></div>
-      <div id="modalBody" class="modal-body py-5 d-flex justify-content-around">
-            <div class="theme-opt" onclick="downloadStory('theme-dark')" style="width: 90px; height: 90px; background: #222; border: 3px solid #fff;">Dark</div>
-            <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-dark-gold')"{% else %}onclick="window.location.href='{{ url_for('upgrade') }}'"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #d4af37; color: #d4af37;">
-                {% if not current_user.is_premium %}<i class="bi bi-lock-fill premium-lock"></i>{% endif %}Gold
-            </div>
-            <div class="theme-opt" {% if current_user.is_premium %}onclick="downloadStory('theme-neon')"{% else %}onclick="window.location.href='{{ url_for('upgrade') }}'"{% endif %} style="width: 90px; height: 90px; background: #000; border: 3px solid #39ff14; color: #39ff14;">
-                {% if not current_user.is_premium %}<i class="bi bi-lock-fill premium-lock"></i>{% endif %}Neon
-            </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script>
 let activeMsgId = null;
 
-function downloadStory(themeClass) {
-    if (!activeMsgId) return;
-    
-    const modalBody = document.getElementById('modalBody');
-    const originalContent = modalBody.innerHTML;
-    modalBody.innerHTML = '<div class="text-center w-100"><div class="spinner-border text-info" role="status"></div><p class="mt-2 text-white">Preparing Share...</p></div>';
+// دالة فك التلميح
+function unlockHint(msgId) {
+    if (!confirm("Unlock the first letter of the sender's name for 5 Points?")) return;
 
-    const card = document.getElementById('msg-card-' + activeMsgId);
-    const originalClass = card.className;
-    card.classList.add(themeClass); 
-    card.classList.add('view-shooting');
-    
-    html2canvas(card, { width: 1080, height: 1920, scale: 2, useCORS: true, backgroundColor: '#000' }).then(canvas => {
-        canvas.toBlob(blob => {
-            const file = new File([blob], "Secret_Message.png", { type: "image/png" });
-            
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({
-                    files: [file],
-                    title: 'Secret Sphere Message',
-                    text: 'Guess who sent me this! 🕵️‍♂️'
-                }).catch(() => { saveImageFallback(canvas); });
-            } else {
-                saveImageFallback(canvas);
-            }
-            
-            card.className = originalClass;
-            modalBody.innerHTML = originalContent;
-            bootstrap.Modal.getInstance(document.getElementById('themeModal')).hide();
-        }, 'image/png');
+    fetch(`/unlock_hint/${msgId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    }).then(res => res.json()).then(data => {
+        if(data.status === 'success') {
+            alert(`Hint Unlocked! The first letter is: ${data.hint}`);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
     });
-}
-
-function saveImageFallback(canvas) {
-    const link = document.createElement('a'); 
-    link.download = `Secret_Message.png`; 
-    link.href = canvas.toDataURL("image/png"); 
-    link.click();
-    alert("Image saved to your gallery! Share it to your stories manually.");
 }
 
 function submitGuess(msgId, answer) {
@@ -254,12 +188,10 @@ function submitGuess(msgId, answer) {
         body: JSON.stringify({answer: answer})
     }).then(res => res.json()).then(data => {
         if(data.status === 'correct') {
-            alert("Correct! 🏆 You earned +1 Point.");
+            alert("Correct! 🏆 Point earned.");
             location.reload();
-        } else if(data.status === 'wrong') {
-            alert("Wrong Answer! Try again.");
         } else {
-            alert(data.message);
+            alert("Wrong Answer!");
         }
     });
 }
@@ -269,6 +201,25 @@ function copyLink() {
     copyText.select(); 
     document.execCommand("copy"); 
     alert("Link Copied! 🚀");
+}
+
+function downloadStory(themeClass) {
+    if (!activeMsgId) return;
+    const card = document.getElementById('msg-card-' + activeMsgId);
+    const originalClass = card.className;
+    card.classList.add(themeClass); 
+    card.classList.add('view-shooting');
+    html2canvas(card, { width: 1080, height: 1920, scale: 2, useCORS: true, backgroundColor: '#000' }).then(canvas => {
+        canvas.toBlob(blob => {
+            const file = new File([blob], "Secret_Message.png", { type: "image/png" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({ files: [file], title: 'Secret Message', text: 'Guess who sent this!' });
+            } else {
+                const link = document.createElement('a'); link.download = `Secret_Message.png`; link.href = canvas.toDataURL("image/png"); link.click();
+            }
+            card.className = originalClass;
+        }, 'image/png');
+    });
 }
 </script>
 {% endblock %}
