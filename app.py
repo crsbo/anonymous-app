@@ -50,6 +50,11 @@ class User(UserMixin, db.Model):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
+    
+    # حقول التلميحات الجديدة
+    sender_name_hint = db.Column(db.String(10)) # لتخزين أول حرف
+    hint_unlocked = db.Column(db.Boolean, default=False) # هل تم الدفع لفتح الحرف؟
+    
     name_opt_1 = db.Column(db.String(50)); name_opt_2 = db.Column(db.String(50)); name_opt_3 = db.Column(db.String(50))
     correct_name = db.Column(db.String(50))
     is_guessed = db.Column(db.Boolean, default=False)
@@ -116,10 +121,31 @@ def dashboard():
                            friends_top=friends_top, 
                            now=datetime.utcnow())
 
+@app.route('/unlock_hint/<int:msg_id>', methods=['POST'])
+@login_required
+def unlock_hint(msg_id):
+    msg = Message.query.get_or_404(msg_id)
+    if msg.user_id != current_user.id:
+        return jsonify({"status": "error", "message": "Unauthorized"}), 403
+    
+    if msg.hint_unlocked:
+        return jsonify({"status": "success", "hint": msg.sender_name_hint or "?"})
+
+    hint_cost = 5 # تكلفة فتح التلميح
+    if current_user.points >= hint_cost:
+        current_user.points -= hint_cost
+        msg.hint_unlocked = True
+        db.session.commit()
+        return jsonify({
+            "status": "success", 
+            "hint": msg.sender_name_hint if msg.sender_name_hint else "Unknown",
+            "new_points": current_user.points
+        })
+    return jsonify({"status": "error", "message": "You need 5 points to unlock the hint!"})
+
 @app.route('/upgrade')
 @login_required
 def upgrade():
-    # هنا ممكن تكرار كود تفعيل البريميوم أو صفحة دفع
     return "<h3>Premium Membership coming soon! 🚀</h3><br><a href='/dashboard'>Back to Dashboard</a>"
 
 @app.route('/sent_success')
@@ -135,10 +161,23 @@ def send_message(username):
     if request.method == 'POST':
         ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
         content = request.form.get('content')
+        
+        # التقاط الاسم وتخزين أول حرف
+        raw_name = request.form.get('sender_name', '').strip()
+        first_char = raw_name[0].upper() if raw_name else None
+        
         opt1 = request.form.get('opt1'); opt2 = request.form.get('opt2'); opt3 = request.form.get('opt3')
         correct_choice = request.form.get('correct')
         final_correct_name = opt1 if correct_choice == "1" else opt2 if correct_choice == "2" else opt3
-        new_msg = Message(content=content, user_id=user.id, sender_ip=ip_addr, name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, correct_name=final_correct_name)
+        
+        new_msg = Message(
+            content=content, 
+            user_id=user.id, 
+            sender_ip=ip_addr, 
+            sender_name_hint=first_char, # حفظ الحرف الأول
+            name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, 
+            correct_name=final_correct_name
+        )
         db.session.add(new_msg)
         db.session.commit()
         return redirect(url_for('sent_success'))
@@ -197,6 +236,7 @@ def utility_processor():
     return dict(format_date=format_date)
 
 with app.app_context():
+    
     db.create_all()
 
 if __name__ == '__main__':
