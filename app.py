@@ -20,7 +20,8 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- Models --- (نفس الموديلات اللي بعتها في الكود بتاعك)
+# --- Models ---
+
 class Friendship(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -49,9 +50,7 @@ class User(UserMixin, db.Model):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    name_opt_1 = db.Column(db.String(50))
-    name_opt_2 = db.Column(db.String(50))
-    name_opt_3 = db.Column(db.String(50))
+    name_opt_1 = db.Column(db.String(50)); name_opt_2 = db.Column(db.String(50)); name_opt_3 = db.Column(db.String(50))
     correct_name = db.Column(db.String(50))
     is_guessed = db.Column(db.Boolean, default=False)
     sender_ip = db.Column(db.String(100))
@@ -64,13 +63,19 @@ def load_user(user_id):
 
 # --- Routes ---
 
+@app.route('/')
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('register'))
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         raw_username = request.form.get('username', '').strip()
         password = request.form.get('password')
 
-        # شرط الحروف الـ Small
+        # منع الحروف الـ Capital تماماً من السيرفر كأمان إضافي
         if any(char.isupper() for char in raw_username):
             flash('Please use lowercase letters only for your username.', 'danger')
             return redirect(url_for('register'))
@@ -94,7 +99,6 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
 
-        # فحص البيانات
         if not user or not check_password_hash(user.password, password):
             flash('Invalid username or password. Please try again.', 'danger')
             return redirect(url_for('login'))
@@ -102,8 +106,6 @@ def login():
         login_user(user)
         return redirect(url_for('dashboard'))
     return render_template('auth.html', type='Login')
-
-# ... (باقي الروابط dashboard, send_message, check_answer, etc. - خليها زي ما هي)
 
 @app.route('/dashboard')
 @login_required
@@ -117,7 +119,13 @@ def dashboard():
 
 @app.route('/user/<username>', methods=['GET', 'POST'])
 def send_message(username):
-    user = User.query.filter_by(username=username.lower()).first_or_404()
+    # تحويل اليوزرنيم لسمول لضمان عدم حدوث 404 لو كتب اللينك كابيتال
+    user = User.query.filter_by(username=username.lower()).first()
+    
+    if not user:
+        flash(f'User "{username}" not found. Make sure the link is correct.', 'danger')
+        return redirect(url_for('register')) # توجيه لصفحة التسجيل بدل 404
+
     if request.method == 'POST':
         ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
         content = request.form.get('content')
@@ -132,7 +140,7 @@ def send_message(username):
         new_msg = Message(content=content, user_id=user.id, sender_ip=ip_addr, name_opt_1=opt1, name_opt_2=opt2, name_opt_3=opt3, correct_name=final_correct_name)
         db.session.add(new_msg)
         db.session.commit()
-        flash("Sent! 🚀", "success")
+        flash("Secret message sent! 🚀", "success")
         return redirect(url_for('send_message', username=username))
     return render_template('send_msg.html', user=user)
 
@@ -156,6 +164,27 @@ def check_answer(msg_id):
             db.session.commit()
             return jsonify({"status": "correct", "points": current_user.points, "message": "No new points for 24h"})
     return jsonify({"status": "wrong"})
+
+@app.route('/add_friend/<int:friend_id>', methods=['POST'])
+@login_required
+def add_friend(friend_id):
+    if friend_id == current_user.id: return redirect(url_for('dashboard'))
+    exists = Friendship.query.filter(((Friendship.user_id == current_user.id) & (Friendship.friend_id == friend_id)) | ((Friendship.user_id == friend_id) & (Friendship.friend_id == current_user.id))).first()
+    if not exists:
+        new_f = Friendship(user_id=current_user.id, friend_id=friend_id)
+        db.session.add(new_f)
+        db.session.commit()
+        flash("Friend added! 🤝", "success")
+    return redirect(url_for('dashboard'))
+
+@app.route('/delete/<int:msg_id>', methods=['POST'])
+@login_required
+def delete_message(msg_id):
+    msg = Message.query.get_or_404(msg_id)
+    if msg.user_id == current_user.id:
+        db.session.delete(msg)
+        db.session.commit()
+    return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 def logout():
